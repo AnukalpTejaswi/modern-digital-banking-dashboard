@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; 
+import { useState, useEffect, useCallback } from 'react'; 
 import { getDashboard, deleteAccount, updateTransactionCategory, deleteTransaction} from './api'; // API function to update transaction category 
 import { showSuccess, showError, showConfirm } from './utils/toast';   // Notification library
 
@@ -20,7 +20,7 @@ function Dashboard({ onLogout }) {
   const [view, setView] = useState('dashboard');  // 'dashboard' | 'account'
   const [isTxnModalOpen, setIsTxnModalOpen] = useState(false); // Add Transaction Modal
   const [isCSVModalOpen, setIsCSVModalOpen] = useState(false); // Upload CSV Modal
-
+  
   // ==========================================
   // DELETE ACCOUNT HANDLER
   // ==========================================
@@ -87,39 +87,38 @@ function Dashboard({ onLogout }) {
 
   // NEW STATES
   const [selectedAccount, setSelectedAccount] = useState(null);  
-  const [searchTerm, setSearchTerm] = useState('');      
+  const [searchTerm] = useState('');      
   const [isModalOpen, setIsModalOpen] = useState(false);       
 
 
   // ==========================================
   // LOAD DATA WHEN COMPONENT MOUNTS
   // ==========================================
-  useEffect(() => {
-    loadData();
-  }, []);  
-
-  const loadData = async () => {
+  
+  const loadData = useCallback(async () => {
     try {
       const response = await getDashboard();
       setData(response.data);
+      
       if (selectedAccount) {
         const updatedAccount = response.data.accounts.find(
           (acc) => acc.id === selectedAccount.id
         );
-
         if (updatedAccount) {
           setSelectedAccount(updatedAccount);
         }
       }
-
     } catch (err) {
-      alert('Failed to load data');
-      console.error(err);
+      showError('Failed to load data');
     } finally {
       setLoading(false);
     }
-  };
-
+  }, [selectedAccount]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);  
+  
+  
   // ==========================================
   // HELPER FUNCTIONS
   // ==========================================
@@ -127,11 +126,18 @@ function Dashboard({ onLogout }) {
   const formatMoney = (amount) => {
     return '₹' + amount.toLocaleString('en-IN');
   };
-
+  
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN');
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+  
   // ==========================================
   // FILTERED TRANSACTIONS
   // ==========================================
@@ -186,7 +192,7 @@ function Dashboard({ onLogout }) {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-gray-500 mb-8">
+          <p className="text-slate-600 mb-8">
             Add your first bank account to get started.
           </p>
 
@@ -254,7 +260,7 @@ function Dashboard({ onLogout }) {
           <h1 className="text-2xl font-bold">
             {selectedAccount.bank_name}
           </h1>
-          <p className="text-gray-500">
+          <p className="text-slate-500">
             {selectedAccount.account_type} • {selectedAccount.masked_account}
           </p>
           <p className="text-3xl font-bold mt-4">
@@ -380,58 +386,74 @@ function Dashboard({ onLogout }) {
   // ==========================================
 
     return (
-      <div className="min-h-screen bg-gray-100 p-6">
+      <div className="min-h-screen bg-slate-100 p-6">
         <div className="max-w-6xl mx-auto">
           
           {/* Header */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6 flex justify-between items-center">
+          <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-2xl font-bold">Welcome, {data.user.name} to your Dashboard! 🏦</h1>
-              <p className="text-gray-600">{data.user.email}</p>
+              <h1 className="text-2xl font-bold text-slate-900">
+                {getGreeting()}, <span className="text-indigo-600">{data.user.name}</span>
+              </h1>
+
+              <p className="text-slate-500 text-sm mt-1">
+                Welcome to your dashboard 🏦
+              </p>
             </div>
-            <button 
+            
+            <button
               onClick={onLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
             >
               Logout
             </button>
           </div>
 
+
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <BudgetsSection />
-            <div 
-              className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-2xl shadow-lg p-6"
-                onClick={() => setSelectedAccount(null)}
-            >
-              <p className="text-indigo-100 text-sm mb-1 uppercase tracking-wide">
-                Total Balance
-              </p>
-              <p className="text-3xl font-bold">
+
+            {/* Total Balance */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 border-l-4 border-l-indigo-500 p-6">
+              <p className="text-slate-900 text-sm">Total Balance</p>
+              <p className="text-3xl font-bold mt-2">
                 {formatMoney(data.summary.total_balance)}
               </p>
-              <p className="text-blue-100 text-sm mt-2">
+              <p className="text-gray-400 text-sm mt-1">
                 {data.summary.total_accounts} accounts
               </p>
             </div>
 
-            <div className="bg-green-500 rounded-2xl shadow-md p-6">
-              <p className="text-white text-sm mb-1">Total Income</p>
-              <p className="text-3xl font-bold text-white">
+            {/* Total Income */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 border-l-4 border-l-indigo-500 p-6">
+              <p className="text-green-600 text-sm">Total Income</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">
                 +{formatMoney(data.summary.total_income)}
               </p>
             </div>
 
-            <div className="bg-red-500 rounded-lg shadow p-6">
-              <p className="text-white text-sm mb-1">Total Expenses</p>
-              <p className="text-3xl font-bold text-white">
+            {/* Total Expenses */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 border-l-4 border-l-indigo-500 p-6">
+              <p className="text-red-600 text-sm">Total Expenses</p>
+              <p className="text-3xl font-bold text-red-600 mt-2">
                 -{formatMoney(data.summary.total_expenses)}
               </p>
             </div>
+
+          </div>
+          
+          <hr className="my-8 border-slate-200" />
+
+          {/* BUDGETS ROW */}
+          <div className="mb-8">
+            <BudgetsSection />
           </div>
 
+          <hr className="my-8 border-slate-200" />
+          
+
           {/* Accounts List */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Your Accounts</h2>
               <button 
@@ -450,11 +472,12 @@ function Dashboard({ onLogout }) {
                     setSelectedAccount(account);
                     setView('account');
                   }}
-                  className={`flex justify-between items-center p-4 rounded-lg cursor-pointer ${
+                  className={`flex justify-between items-center p-4 rounded-lg cursor-pointer transition-colors duration-200 ${
                     selectedAccount?.id === account.id
                       ? 'bg-blue-100 border border-blue-400'
-                      : 'bg-gray-50'
+                      : 'bg-gray-50 hover:bg-slate-100'
                   }`}
+
                 >
                   <div className="flex-1">
                     <p className="font-semibold">{account.bank_name}</p>

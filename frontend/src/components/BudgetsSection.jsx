@@ -51,7 +51,8 @@ function BudgetsSection() {
 
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-6">
+    <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6">
+
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Budgets</h2>
         <button
@@ -68,17 +69,21 @@ function BudgetsSection() {
   <>
     {/* Overall Monthly Budget */}
     {budgets.overall && (
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-2">
-          Monthly Budget
-        </h3>
-        <BudgetCard
-          budget={budgets.overall}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-2xl p-6 shadow-lg">
+          <h3 className="bg-indigo-50 border border-indigo-100">
+            Monthly Budget
+          </h3>
+
+          <p className="text-sm text-indigo-100 mb-4">
+            Overall spending limit for this month
+          </p>
+
+          <BudgetCard budget={budgets.overall} variant="hero" />
+        </div>
       </div>
     )}
+
 
     {/* Category Budgets */}
     {budgets.categories.length === 0 ? (
