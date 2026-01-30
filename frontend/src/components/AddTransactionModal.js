@@ -8,7 +8,7 @@ function AddTransactionModal({
   accountId,
   onTransactionAdded,
 }) {
-  const [merchant, setMerchant] = useState('');
+    const [merchant, setMerchant] = useState('');
     const INITIAL_FORM_STATE = {
     amount: '',
     txn_type: 'debit',
@@ -25,11 +25,6 @@ function AddTransactionModal({
 
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.merchant || !formData.merchant.trim()) {
-    showError('Merchant is required');
-    return;
-  }
 
     try {
         await createTransaction({
@@ -120,7 +115,6 @@ function AddTransactionModal({
           {/* Merchant */}
           <input
             type="text"
-            required
             placeholder="Merchant"
             className="w-full border p-2 rounded"
             value={formData.merchant}
@@ -128,9 +122,6 @@ function AddTransactionModal({
                 setFormData({ ...formData, merchant: e.target.value })
             }
             />
-            <p className="text-xs text-gray-500">
-              Merchant is required for categorization
-            </p>
 
 
 

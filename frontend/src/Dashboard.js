@@ -8,7 +8,7 @@ import AddTransactionModal from './components/AddTransactionModal'; // Add Trans
 import CategoryBadge from './components/CategoryBadge';     // Category badge component
 import AddAccountModal from './components/AddAccountModal';
 import UploadCSVModal from './components/UploadCSVModal'; // Upload CSV Modal
-
+import BudgetsSection from './components/BudgetsSection'; // Budgets Section Component
 
 function Dashboard({ onLogout }) {
   // ==========================================
@@ -59,15 +59,31 @@ function Dashboard({ onLogout }) {
   // CATEGORY UPDATE HANDLER
   // ==========================================
   const handleCategoryChange = async (transactionId, newCategory) => {
-    try {
-      await updateTransactionCategory(transactionId, newCategory);
-      showSuccess('Category updated');
-      loadData(); // refresh dashboard
-    } catch (error) {
-      console.error(error);
-      showError('Failed to update category');
+  try {
+    const res = await updateTransactionCategory(transactionId, {
+      category: newCategory,
+      force: false,
+    });
+
+    if (res.data.warning) {
+      showConfirm(res.data.message, async () => {
+        await updateTransactionCategory(transactionId, {
+          category: newCategory,
+          force: true,
+        });
+        showSuccess("Category updated");
+        loadData();
+      });
+      return;
     }
-  };
+
+    showSuccess("Category updated");
+    loadData();
+  } catch (err) {
+    showError("Failed to update category");
+  }
+};
+
 
   // NEW STATES
   const [selectedAccount, setSelectedAccount] = useState(null);  
@@ -383,6 +399,7 @@ function Dashboard({ onLogout }) {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <BudgetsSection />
             <div 
               className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-2xl shadow-lg p-6"
                 onClick={() => setSelectedAccount(null)}

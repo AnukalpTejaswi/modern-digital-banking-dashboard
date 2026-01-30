@@ -67,11 +67,10 @@ export const createTransaction = (data) => {
 
 
 // UPDATE TRANSACTION CATEGORY
-export const updateTransactionCategory = (transactionId, category) => {
-  return API.put(`/transactions/${transactionId}`, {
-    category,
-  });
+export const updateTransactionCategory = (transactionId, payload) => {
+  return API.put(`/transactions/${transactionId}`, payload);
 };
+
 // DELETE TRANSACTION
 export const deleteTransaction = (transactionId) => {
   return API.delete(`/transactions/${transactionId}`);
@@ -88,6 +87,30 @@ export const uploadTransactionsCSV = (accountId, file) => {
     },
   });
 };
+
+// ================================
+// BUDGETS
+// ================================
+
+// CREATE BUDGET
+export const createBudget = (data) => {
+  return API.post('/budgets', data);
+};
+
+// GET BUDGETS FOR MONTH & YEAR
+export const getBudgets = (month, year) => {
+  return API.get('/budgets', {
+    params: { month, year },
+  });
+};
+
+// UPDATE BUDGET
+export const updateBudget = (id, data) =>
+  API.put(`/budgets/${id}`, data);
+
+// DELETE BUDGET
+export const deleteBudget = (id) =>
+  API.delete(`/budgets/${id}`);
 
 
 //  Global error handling (optional)
