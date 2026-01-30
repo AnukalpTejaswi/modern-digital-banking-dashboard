@@ -10,7 +10,6 @@ Text,
 ForeignKey,
 Enum,
 )
-from sqlalchemy import DateTime
 from datetime import timezone
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
@@ -97,7 +96,7 @@ class Transaction(Base):
     """Transaction model - stores financial transactions"""
 
     __tablename__ = "transactions"
-    __table_args__ = (
+    __table_args__ = ( 
         UniqueConstraint(
             "account_id",
             "amount",
@@ -203,3 +202,19 @@ class AdminLog(Base):
     target_type = Column(String(50), nullable=True)
     target_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class Category(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    name = Column(String(50), nullable=False)
+
+
+class CategoryKeyword(Base):
+    __tablename__ = "category_keywords"
+
+    id = Column(Integer, primary_key=True)
+    category_id = Column(Integer, ForeignKey("categories.id"))
+    keyword = Column(String(100), nullable=False)

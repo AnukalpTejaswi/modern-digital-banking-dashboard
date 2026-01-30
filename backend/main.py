@@ -9,6 +9,9 @@ from .routes.auth import router as auth_router
 from .routes.accounts import router as accounts_router
 from .routes.transactions import router as transactions_router 
 from .routes.dashboard import router as dashboard_router
+from .routes import categories
+from .routes.budgets import router as budgets_router
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -62,7 +65,8 @@ app.include_router(auth_router)
 app.include_router(accounts_router)
 app.include_router(transactions_router)    
 app.include_router(dashboard_router)
-
+app.include_router(categories.router)
+app.include_router(budgets_router)
 
 @app.get("/")
 async def root():

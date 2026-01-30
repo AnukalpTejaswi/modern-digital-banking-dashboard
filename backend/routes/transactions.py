@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, update, func
 import csv
 import io
 from datetime import datetime, timezone # for handling dates
@@ -12,6 +12,7 @@ from ..database import get_db
 from ..model import Transaction, TransactionType, Account, User
 from ..routes.transcations_schema import (TransactionResponse, TransactionCreate, )
 from ..services.categorizer import auto_assign_category
+from ..services.category_rules import find_category, add_keyword_to_category, remove_keyword_from_category
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
 
@@ -46,11 +47,13 @@ async def create_transaction(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account not found or access denied",
         )
-    category = transaction.category
-    if not category:
+    if transaction.category:
+        category = transaction.category
+    else:
         category = auto_assign_category(
             f"{transaction.merchant} {transaction.description or ''}"
         )
+
     duplicate_query = select(Transaction).where(
         Transaction.account_id == transaction.account_id,
         Transaction.amount == transaction.amount,
@@ -317,26 +320,60 @@ async def update_transaction_category(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Transaction).where(Transaction.id == transaction_id)
-    result = await db.execute(query)
+    # Fetch transaction
+    result = await db.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
     txn = result.scalars().first()
 
     if not txn:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    # verify ownership
-    account_query = select(Account).where(
-        Account.id == txn.account_id,
-        Account.user_id == current_user.id,
+    # Verify ownership
+    acc_result = await db.execute(
+        select(Account).where(
+            Account.id == txn.account_id,
+            Account.user_id == current_user.id,
+        )
     )
-    acc_result = await db.execute(account_query)
     if not acc_result.scalars().first():
         raise HTTPException(status_code=403, detail="Access denied")
 
-    txn.category = payload.get("category", txn.category)
+    new_category = payload.get("category")
+    force = payload.get("force", False)
+    if force:
+        await db.execute(
+            update(Transaction)
+            .where(
+                Transaction.account_id == txn.account_id,
+                Transaction.merchant == txn.merchant
+            )
+            .values(category=new_category)
+        )
+    else:
+        txn.category = new_category
 
+    # Validate new category
+    keyword = (txn.merchant or "").lower().strip()
+    existing_category = find_category(keyword)
+
+    if existing_category and existing_category != new_category and not force:
+        return {
+            "warning": True,
+            "message": f"'{keyword}' is commonly categorized as {existing_category}. Do you want to move it to {new_category}?"
+        }
+    # Update category rules
+    if existing_category and existing_category != new_category:
+        remove_keyword_from_category(existing_category, keyword)
+
+    add_keyword_to_category(new_category, keyword)
+
+    # Update transaction
+    txn.category = new_category
     await db.commit()
-    return {"message": "Category updated"}
+
+    return {"message": "Category updated successfully"}
+
 
 # ==========================================
 # Delete Transaction
