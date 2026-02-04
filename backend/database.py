@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import text
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import text, create_engine
 from typing import AsyncGenerator
 import os
 from dotenv import load_dotenv
@@ -20,6 +20,24 @@ engine = create_async_engine(
     pool_size=10,
     max_overflow=10,
     pool_pre_ping=True,
+)
+
+SYNC_DATABASE_URL = DATABASE_URL.replace("+asyncpg", "")
+
+sync_engine = create_engine(
+    SYNC_DATABASE_URL,
+    pool_pre_ping=True
+)
+
+SyncSessionLocal = sessionmaker(
+    bind=sync_engine,
+    autoflush=False,
+    autocommit=False
+)
+
+async_session = async_sessionmaker(
+    bind=engine,
+    expire_on_commit=False
 )
 
 AsyncSessionLocal = async_sessionmaker(

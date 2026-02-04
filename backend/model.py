@@ -140,24 +140,20 @@ class Budget(Base):
     spent_amount = Column(Numeric(14, 2), default=0.0)
     created_at = Column(DateTime, server_default=func.now())
 
-
+last_reminded_at = Column(Date, nullable=True)
 class Bill(Base):
     """Bill model - stores upcoming bills"""
 
     __tablename__ = "bills"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
-    biller_name = Column(String(50), nullable=True)
-    due_date = Column(Date, nullable=True)
-    amount_due = Column(Numeric(14, 2), nullable=True)
-    status = Column(
-        Enum(BillStatus, name="status_enum"),  # ← Specify exact name
-        default=BillStatus.upcoming,
-    )
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    biller_name = Column(String(50))
+    due_date = Column(Date)
+    amount_due = Column(Numeric(14, 2))
+    status = Column(Enum(BillStatus))
     auto_pay = Column(Boolean, default=False)
+    last_reminded_at = Column(Date, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
 

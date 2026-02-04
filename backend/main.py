@@ -11,7 +11,7 @@ from .routes.transactions import router as transactions_router
 from .routes.dashboard import router as dashboard_router
 from .routes import categories
 from .routes.budgets import router as budgets_router
-
+from .routes import bills
 
 logging.basicConfig(
     level=logging.INFO,
@@ -67,6 +67,7 @@ app.include_router(transactions_router)
 app.include_router(dashboard_router)
 app.include_router(categories.router)
 app.include_router(budgets_router)
+app.include_router(bills.router, prefix="/bills", tags=["Bills"])
 
 @app.get("/")
 async def root():
