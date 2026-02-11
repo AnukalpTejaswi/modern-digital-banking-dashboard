@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { register } from './api';
 import { showSuccess, showError } from './utils/toast'; // Notification library
 
-function Register({ onRegisterSuccess, onGoToLogin }) {
+function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -10,6 +11,7 @@ function Register({ onRegisterSuccess, onGoToLogin }) {
   const [kycStatus, setKycStatus] = useState('unverified');  
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +21,7 @@ function Register({ onRegisterSuccess, onGoToLogin }) {
       await register(name, email, password, phone);
 
       showSuccess('Account created successfully');
-      onRegisterSuccess();
+      navigate('/login');
 
     } catch (err) {
       // showError(err.response?.data?.detail || 'Registration failed');
@@ -130,9 +132,12 @@ function Register({ onRegisterSuccess, onGoToLogin }) {
         {/* Login Link */}
         <p className="text-center text-sm mt-6 text-gray-600">
           Already have an account?{' '}
-          <button onClick={onGoToLogin} className="text-blue-600 hover:underline">
+          <button
+            onClick={() => navigate('/login')}
+            className="text-blue-600 hover:underline"
+          >
             Login
-        </button>
+          </button>
         </p>
       </div>
     </div>

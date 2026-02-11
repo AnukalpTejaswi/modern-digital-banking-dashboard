@@ -48,8 +48,8 @@ class BillStatus(enum.Enum):
 
 class AlertType(enum.Enum):
     """Alert notification types"""
-    low_balance = "low_balance"
     bill_due = "bill_due"
+    budget_warning = "budget_warning"
     budget_exceeded = "budget_exceeded"
 
 
@@ -141,9 +141,8 @@ class Budget(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 last_reminded_at = Column(Date, nullable=True)
-class Bill(Base):
-    """Bill model - stores upcoming bills"""
 
+class Bill(Base):
     __tablename__ = "bills"
 
     id = Column(Integer, primary_key=True)
@@ -151,7 +150,14 @@ class Bill(Base):
     biller_name = Column(String(50))
     due_date = Column(Date)
     amount_due = Column(Numeric(14, 2))
-    status = Column(Enum(BillStatus))
+    status = Column(
+        Enum(
+            BillStatus,
+            name="status_enum",     
+            create_type=False     
+        ),
+        default=BillStatus.upcoming
+    )
     auto_pay = Column(Boolean, default=False)
     last_reminded_at = Column(Date, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
@@ -172,18 +178,13 @@ class Reward(Base):
 
 
 class Alert(Base):
-    """Alert model - stores user notifications"""
-
     __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
-    alert_type = Column(
-        Enum(AlertType, name="type_enum"), nullable=True  # ← Specify exact name
-    )
-    message = Column(Text, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    alert_type = Column(Enum(AlertType, name="type_enum"))
+    message = Column(Text)
+    is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
 
 

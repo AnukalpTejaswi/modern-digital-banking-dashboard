@@ -4,12 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
 import csv
 import io
-from datetime import datetime, timezone # for handling dates
+from datetime import datetime, timezone, date # for handling dates
 from decimal import Decimal, InvalidOperation # for precise money handling
 
 from ..auth.jwt_handler import get_current_user
 from ..database import get_db
-from ..model import Transaction, TransactionType, Account, User
+from ..model import Transaction, TransactionType, Account, User, Budget, Alert, AlertType
 from ..routes.transcations_schema import (TransactionResponse, TransactionCreate, )
 from ..services.categorizer import auto_assign_category
 from ..services.category_rules import find_category, add_keyword_to_category, remove_keyword_from_category
@@ -24,6 +24,88 @@ def parse_date(date_str: str) -> datetime:
         except ValueError:
             continue
     raise ValueError(f"Invalid date format: {date_str}")
+
+async def check_budget_and_create_alert(
+    *,
+    db: AsyncSession,
+    user_id: int,
+    category: str,
+    txn_date: datetime,
+    txn_amount: Decimal,
+):
+    if not category:
+        return
+
+    month = txn_date.month
+    year = txn_date.year
+
+    # 1. Fetch budget
+    result = await db.execute(
+        select(Budget).where(
+            Budget.user_id == user_id,
+            Budget.category == category,
+            Budget.month == month,
+            Budget.year == year,
+        )
+    )
+    budget = result.scalars().first()
+    if not budget or not budget.limit_amount:
+        return
+
+    # 2. Calculate spent BEFORE this transaction
+    spent_result = await db.execute(
+        select(func.sum(Transaction.amount))
+        .join(Account, Transaction.account_id == Account.id)
+        .where(
+            Account.user_id == user_id,
+            Transaction.category == category,
+            Transaction.txn_type == TransactionType.debit,
+            func.extract("month", Transaction.txn_date) == month,
+            func.extract("year", Transaction.txn_date) == year,
+        )
+    )
+
+    spent = Decimal(spent_result.scalar() or 0)
+    spent += txn_amount
+
+    limit_amount = Decimal(budget.limit_amount)
+    usage_pct = (spent / limit_amount) * 100 if limit_amount > 0 else 0
+
+    # 3. Decide alert
+    if usage_pct >= 100:
+        message = (
+            f"Budget exceeded for {category} "
+            f"(₹{spent:.2f} / ₹{limit_amount:.2f})"
+        )
+    elif usage_pct >= 80:
+        message = (
+            f"Budget almost reached for {category} "
+            f"(₹{spent:.2f} / ₹{limit_amount:.2f})"
+        )
+    else:
+        return
+
+    # 4. Prevent duplicate unread alert for same category
+    existing = await db.execute(
+        select(Alert).where(
+            Alert.user_id == user_id,
+            Alert.alert_type == AlertType.budget_exceeded,
+            Alert.is_read == False,
+            Alert.message.ilike(f"%{category}%"),
+        )
+    )
+    if existing.scalars().first():
+        return
+
+    # 5. Create alert (NO commit here)
+    db.add(
+        Alert(
+            user_id=user_id,
+            alert_type=AlertType.budget_exceeded,
+            message=message,
+            is_read=False,
+        )
+    )
 
 # =====================================================
 # 1. CREATE TRANSACTION
@@ -90,14 +172,26 @@ async def create_transaction(
     else:
         account.balance -= amount
 
-    # 4. Commit once
+    # 4. Budget check (only for debit)
+    if new_transaction.txn_type == TransactionType.debit:
+        await check_budget_and_create_alert(
+            db=db,
+            user_id=current_user.id,
+            category=new_transaction.category,
+            txn_date=new_transaction.txn_date,
+            txn_amount=Decimal(str(new_transaction.amount)),
+        )
+
+    # 5. Commit ONCE
     await db.commit()
     await db.refresh(new_transaction)
-
+    
     return {
         "message": "Transaction created successfully",
         "transaction_id": new_transaction.id,
     }
+
+
 
 # =====================================================
 # 2. UPLOAD CSV TRANSACTIONS
@@ -192,6 +286,16 @@ async def upload_transactions_csv(
                 account.balance -= amount
 
             transactions_created += 1
+
+            if txn_type == TransactionType.debit:
+                await check_budget_and_create_alert(
+                    db=db,
+                    user_id=current_user.id,
+                    category=category,
+                    txn_date=txn_date,
+                    txn_amount=amount,
+                )
+
 
         except Exception as e:
             print("CSV SKIPPED ROW:", row, "ERROR:", e)

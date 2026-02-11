@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import datetime
 
-from ..model import Transaction, TransactionType, Budget
+from ..model import Transaction, TransactionType, Budget, Account
 
 
 async def calculate_budget_usage(
@@ -27,13 +27,18 @@ async def calculate_budget_usage(
         Transaction.txn_type == TransactionType.debit,
         Transaction.txn_date >= start_date,
         Transaction.txn_date < end_date,
+        Account.user_id == user_id,
     ]
-
     # If category budget → filter by category
     if budget.category is not None:
         conditions.append(Transaction.category == budget.category)
 
-    query = select(func.sum(Transaction.amount)).where(*conditions)
+    query = (
+        select(func.sum(Transaction.amount))
+        .select_from(Transaction)
+        .join(Account, Transaction.account_id == Account.id)
+        .where(*conditions)
+    )
 
 
     result = await db.execute(query)

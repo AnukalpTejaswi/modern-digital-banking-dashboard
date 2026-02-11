@@ -1,61 +1,58 @@
-import { useState, useEffect } from 'react';
-import Login from './Login';
-import Register from './Register';
-import Dashboard from './Dashboard';
-import { ToastContainer } from 'react-toastify';  // Notification library
-import 'react-toastify/dist/ReactToastify.css';   // Notification styles
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import Login from "./Login";
+import Register from "./Register";
+
+import DashboardLayout from "./pages/DashboardLayout";
+import DashboardHome from "./pages/DashboardHome";
+import Overview from "./pages/Overview";
+import Accounts from "./pages/Accounts";
+import AccountDetails from "./pages/AccountDetails";
+import Budgets from "./pages/Budgets";
+import Bills from "./pages/Bills";
+import { DateProvider } from "./context/DateContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Profile from "./pages/Profile";
+
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
-  // Which page to show
-  const [page, setPage] = useState('login');
-
-  // Check login on first load
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setPage('dashboard');
-    }
-  }, []);
-
-  // Handlers
-  const handleLoginSuccess = () => {
-    setPage('dashboard');
-  };
-
-  const handleRegisterSuccess = () => {
-    setPage('login');
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setPage('login');
-  };
-
-  // Render
- return (
+  return (
     <>
       <ToastContainer />
 
-      {page === 'login' && (
-        <Login
-          onLoginSuccess={handleLoginSuccess}
-          onGoToRegister={() => setPage('register')}
-        />
-      )}
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-      {page === 'register' && (
-        <Register
-          onRegisterSuccess={handleRegisterSuccess}
-          onGoToLogin={() => setPage('login')}
-        />
-      )}
+          {/* Dashboard (protected + layout) */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DateProvider>
+                  <DashboardLayout />
+                </DateProvider>
+              </ProtectedRoute>
+            }
+          >
+            
+            <Route index element={<DashboardHome />} />
+            <Route path="accounts" element={<Accounts />} />
+            <Route path="accounts/:accountId" element={<AccountDetails />} />
+            <Route path="budgets" element={<Budgets />} />
+            <Route path="bills" element={<Bills />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
 
-      {page === 'dashboard' && (
-        <Dashboard onLogout={handleLogout} />
-      )}
-
-
-    </> 
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 

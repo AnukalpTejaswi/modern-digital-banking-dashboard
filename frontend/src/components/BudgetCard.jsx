@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-function BudgetCard({ budget, onEdit, onDelete, variant = 'normal' }) {
+function BudgetCard({ budget, onEdit, onDelete, variant = "normal" }) {
   const {
     category,
     limit_amount,
@@ -10,6 +10,7 @@ function BudgetCard({ budget, onEdit, onDelete, variant = 'normal' }) {
   } = budget;
 
   const isOverall = category === null;
+  const WARNING_THRESHOLD = 70;
 
   const percentUsed =
     limit_amount > 0
@@ -17,85 +18,98 @@ function BudgetCard({ budget, onEdit, onDelete, variant = 'normal' }) {
       : 0;
 
   const [animatedWidth, setAnimatedWidth] = useState(0);
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        setAnimatedWidth(percentUsed);
-      }, 100);
 
-      return () => clearTimeout(timer);
-    }, [percentUsed]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimatedWidth(percentUsed);
+    }, 100);
 
-  const statusLabel = is_over_budget
-    ? 'Over Budget'
-    : percentUsed >= 80
-    ? 'Near Limit'
-    : 'On Track';
-    
+    return () => clearTimeout(timer);
+  }, [percentUsed]);
+
+  const statusLabel =
+    percentUsed >= 100
+      ? "Limit Reached"
+      : percentUsed >= WARNING_THRESHOLD
+      ? "Near Limit"
+      : "On Track";
+
   const statusStyle =
-    variant === 'hero'
-      ? 'bg-white/20 text-white'
-      : is_over_budget
-      ? 'bg-red-100 text-red-700'
-      : percentUsed >= 80
-      ? 'bg-yellow-100 text-yellow-700'
-      : 'bg-green-100 text-green-700';
+    variant === "hero"
+      ? "bg-white/20 text-white"
+      : percentUsed >= 100
+      ? "bg-red-100 text-red-700"
+      : percentUsed >= WARNING_THRESHOLD
+      ? "bg-yellow-100 text-yellow-700"
+      : "bg-green-100 text-green-700";
 
-  const cardBg = is_over_budget
-    ? 'bg-red-50'
-    : percentUsed >= 80
-    ? 'bg-yellow-50'
-    : 'bg-white';
+  const cardBg = 
+    percentUsed >= 100
+      ? "bg-red-50"
+      : percentUsed >= 70
+      ? "bg-yellow-50"
+      : "bg-white";
 
+  const barColor =
+    percentUsed >= 100
+      ? "bg-red-500"
+      : percentUsed >= WARNING_THRESHOLD
+      ? "bg-yellow-400"
+      : "bg-green-500";
 
-
+      
   return (
-    <div className={`rounded-xl p-4 shadow ${cardBg}`}>
-
+    <div
+        className={`rounded-xl p-4 shadow ${cardBg} ${
+          percentUsed >= 100 ? "animate-shake" : ""
+        }`}
+      >
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-semibold text-lg">
-          {category || 'Monthly Budget'}
+          {category || "Monthly Budget"}
         </h3>
 
         <span
           className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyle}`}
         >
-          {is_over_budget ? '⚠️' : '✅'} {statusLabel}
+          {percentUsed >= 100 ? "⚠️" : "✅"} {statusLabel}
         </span>
       </div>
 
-
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+      <div className="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
         <div
-          className={`h-2 rounded-full transition-all duration-700 ease-out ${
-            is_over_budget ? 'bg-red-500' : 'bg-indigo-600'
-          }`}
+          className={`h-2 rounded-full transition-all duration-700 ease-out ${barColor}`}
           style={{ width: `${animatedWidth}%` }}
         />
       </div>
 
+      {/* Percentage */}
+      <p className="text-xs text-center text-gray-500 mb-2">
+        {Math.round(percentUsed)}% used
+      </p>
+
       {/* Footer */}
-      <p className="text-center">
+      <p className="text-center mb-2">
         {is_over_budget ? (
-          <span className="text-red-600 font-thin">
+          <span className="text-red-600 font-medium">
             Over by ₹{Math.abs(remaining_amount)}
           </span>
         ) : (
-          <span className="text-gray-600">
+          <span className="text-slate-600">
             ₹{remaining_amount} remaining
           </span>
         )}
       </p>
 
-
       <div className="flex justify-between items-center">
         <h3 className="font-semibold">
-          {isOverall ? 'Monthly Budget' : category}
+          {isOverall ? "Monthly Budget" : category}
         </h3>
 
         <div className="flex gap-2 text-sm">
-         <button
+          <button
             onClick={() => onEdit(budget)}
             className="text-blue-600 hover:underline"
           >
@@ -108,7 +122,6 @@ function BudgetCard({ budget, onEdit, onDelete, variant = 'normal' }) {
           >
             Delete
           </button>
-
         </div>
       </div>
     </div>

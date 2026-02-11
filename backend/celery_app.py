@@ -31,3 +31,5 @@ celery_app.conf.beat_schedule = {
 celery_app.conf.update(
     include=["backend.tasks.bill_reminders"]
 )
+
+celery_app.autodiscover_tasks(["backend.tasks"])

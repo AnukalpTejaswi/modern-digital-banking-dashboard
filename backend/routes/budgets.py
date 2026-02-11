@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
+from datetime import date
 
 from ..services.budget_calculator import calculate_budget_usage
 from ..auth.jwt_handler import get_current_user
@@ -14,7 +15,9 @@ router = APIRouter(
     tags=["Budgets"]
 )
 
+# ============================
 # Create a new budget
+# ============================
 @router.post(
     "",
     response_model=BudgetResponse,
@@ -25,7 +28,18 @@ async def create_budget(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Check for duplicate budget
+    # Prevent creating budgets for past months
+    today = date.today()
+    if (
+        payload.year < today.year or
+        (payload.year == today.year and payload.month < today.month)
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot create budget for a previous month"
+        )
+
+    # Check for duplicate budget (same user, month, year, category)
     query = select(Budget).where(
         Budget.user_id == current_user.id,
         Budget.month == payload.month,
@@ -55,7 +69,7 @@ async def create_budget(
     await db.commit()
     await db.refresh(new_budget)
 
-    # Return response
+    # Initial response (no spending yet)
     return BudgetResponse(
         id=new_budget.id,
         month=new_budget.month,
@@ -67,7 +81,9 @@ async def create_budget(
         is_over_budget=False,
     )
 
-# List budgets for a given month and year
+# ============================
+# List budgets for a month/year
+# ============================
 @router.get(
     "",
     response_model=List[BudgetResponse],
@@ -79,7 +95,7 @@ async def list_budgets(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Fetch budgets for user + month + year
+    # Fetch budgets for user + selected month/year
     query = select(Budget).where(
         Budget.user_id == current_user.id,
         Budget.month == month,
@@ -114,7 +130,9 @@ async def list_budgets(
 
     return responses
 
+# ============================
 # Update an existing budget
+# ============================
 @router.put("/{budget_id}", status_code=200)
 async def update_budget(
     budget_id: int,
@@ -122,6 +140,7 @@ async def update_budget(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Fetch budget owned by user
     result = await db.execute(
         select(Budget).where(
             Budget.id == budget_id,
@@ -133,17 +152,27 @@ async def update_budget(
     if not budget:
         raise HTTPException(status_code=404, detail="Budget not found")
 
-    # Update allowed fields
+    # Update allowed fields only
     if "limit_amount" in payload:
-        budget.limit_amount = payload["limit_amount"]
+        try:
+            budget.limit_amount = float(payload["limit_amount"])
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid limit amount"
+            )
 
     if "category" in payload:
-        budget.category = payload["category"]  # can be None for overall
+        # Category can be None (overall budget)
+        budget.category = payload["category"]
 
     await db.commit()
+
     return {"message": "Budget updated successfully"}
 
+# ============================
 # Delete a budget
+# ============================
 @router.delete("/{budget_id}", status_code=200)
 async def delete_budget(
     budget_id: int,

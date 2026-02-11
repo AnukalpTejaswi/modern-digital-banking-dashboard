@@ -1,5 +1,5 @@
-export const CATEGORIES = [
-    "Income",
+export const CATEGORIES = [   
+  "Income",
   "Food",
   "Groceries",
   "Transport",

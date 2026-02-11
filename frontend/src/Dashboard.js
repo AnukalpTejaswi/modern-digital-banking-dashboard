@@ -86,10 +86,15 @@ function Dashboard({ onLogout }) {
 
 
   // NEW STATES
-  const [selectedAccount, setSelectedAccount] = useState(null);  
-  const [searchTerm] = useState('');      
+  const [selectedAccount, setSelectedAccount] = useState(null);    
   const [isModalOpen, setIsModalOpen] = useState(false);       
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date().getMonth() + 1
+  );
 
+  const [selectedYear, setSelectedYear] = useState(
+    new Date().getFullYear()
+  );
 
   // ==========================================
   // LOAD DATA WHEN COMPONENT MOUNTS
@@ -156,6 +161,33 @@ function Dashboard({ onLogout }) {
         return matchesAccount && matchesSearch;
       })
     : [];
+
+  const monthlyTransactions = data
+    ? data.transactions.filter((txn) => {
+        const date = new Date(txn.txn_date);
+        return (
+          date.getMonth() + 1 === selectedMonth &&
+          date.getFullYear() === selectedYear
+        );
+      })
+    : [];
+
+  const totalIncome = monthlyTransactions
+    .filter((txn) => txn.txn_type === 'credit')
+    .reduce((sum, txn) => sum + Number(txn.amount), 0);
+
+  const totalExpense = monthlyTransactions
+    .filter((txn) => txn.txn_type === 'debit')
+    .reduce((sum, txn) => sum + Number(txn.amount), 0);
+
+  const netCashFlow = totalIncome - totalExpense;
+
+  const totalBalance = data
+    ? data.accounts.reduce(
+        (sum, acc) => sum + Number(acc.balance),
+        0
+      )
+    : 0;
 
   // ==========================================
   // LOADING STATE
@@ -409,40 +441,86 @@ function Dashboard({ onLogout }) {
             </button>
           </div>
 
-
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-700">
+              Summary for{" "}
+              {new Date(selectedYear, selectedMonth - 1).toLocaleString("en-IN", {
+                month: "long",
+                year: "numeric",
+              })}
+            </h2>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (selectedMonth === 1) {
+                    setSelectedMonth(12);
+                    setSelectedYear((y) => y - 1);
+                  } else {
+                    setSelectedMonth((m) => m - 1);
+                  }
+                }}
+                className="px-3 py-1 border rounded hover:bg-slate-100"
+              >
+                ◀
+              </button>
+
+              <button
+                onClick={() => {
+                  if (selectedMonth === 12) {
+                    setSelectedMonth(1);
+                    setSelectedYear((y) => y + 1);
+                  } else {
+                    setSelectedMonth((m) => m + 1);
+                  }
+                }}
+                className="px-3 py-1 border rounded hover:bg-slate-100"
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
             {/* Total Balance */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 border-l-4 border-l-indigo-500 p-6">
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
               <p className="text-slate-900 text-sm">Total Balance</p>
               <p className="text-3xl font-bold mt-2">
-                {formatMoney(data.summary.total_balance)}
-              </p>
-              <p className="text-gray-400 text-sm mt-1">
-                {data.summary.total_accounts} accounts
+                {formatMoney(totalBalance)}
               </p>
             </div>
 
-            {/* Total Income */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 border-l-4 border-l-indigo-500 p-6">
-              <p className="text-green-600 text-sm">Total Income</p>
+            {/* Income */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
+              <p className="text-green-600 text-sm">This Month Income</p>
               <p className="text-3xl font-bold text-green-600 mt-2">
-                +{formatMoney(data.summary.total_income)}
+                +{formatMoney(totalIncome)}
               </p>
             </div>
 
-            {/* Total Expenses */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 border-l-4 border-l-indigo-500 p-6">
-              <p className="text-red-600 text-sm">Total Expenses</p>
+            {/* Expense */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
+              <p className="text-red-600 text-sm">This Month Expense</p>
               <p className="text-3xl font-bold text-red-600 mt-2">
-                -{formatMoney(data.summary.total_expenses)}
+                -{formatMoney(totalExpense)}
+              </p>
+            </div>
+
+            {/* Net */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
+              <p className="text-slate-600 text-sm">Net Cash Flow</p>
+              <p
+                className={`text-3xl font-bold mt-2 ${
+                  netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}
+              >
+                {formatMoney(netCashFlow)}
               </p>
             </div>
 
           </div>
-          
-          <hr className="my-8 border-slate-200" />
 
           {/* BUDGETS ROW */}
           <div className="mb-8">

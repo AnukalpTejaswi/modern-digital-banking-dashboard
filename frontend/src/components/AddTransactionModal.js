@@ -25,29 +25,29 @@ function AddTransactionModal({
 
 
   const handleSubmit = async (e) => {
+    e.preventDefault();
 
     try {
-        await createTransaction({
-            account_id: accountId,
-            amount: Number(formData.amount),
-            txn_type: formData.txn_type,
-            category: formData.category,
-            description: formData.description || null,
-            merchant: formData.merchant.trim(),
-            currency: formData.currency,
-            txn_date: formData.txn_date,
-            posted_date: formData.posted_date || null,
-        });
+      await createTransaction({
+        account_id: accountId,
+        amount: Number(formData.amount),
+        txn_type: formData.txn_type,
+        category: formData.category,
+        description: formData.description || null,
+        merchant: formData.merchant.trim(),
+        currency: formData.currency,
+        txn_date: formData.txn_date,
+        posted_date: formData.posted_date || null,
+      });
 
-        showSuccess('Transaction added successfully');
+      showSuccess('Transaction added successfully');
 
-        setFormData(INITIAL_FORM_STATE); 
-        onTransactionAdded();
-        onClose();
-        } catch (error) {
-        showError('Failed to add transaction');
-}
-
+      setFormData(INITIAL_FORM_STATE);
+      onTransactionAdded();  
+      onClose();              
+    } catch (error) {
+      showError('Failed to add transaction');
+    }
   };
 
   return (

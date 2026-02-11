@@ -1,4 +1,4 @@
-function CategoryBadge({ category }) { 
+function CategoryBadge({ category }) { // Component to display a badge for a given category with specific styling
   const colors = {
     Income: "bg-green-100 text-green-700",
     Food: "bg-orange-100 text-orange-700",

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { toast } from 'react-toastify';  // Notification library
 
 // ==========================================
 // STEP 1: Create Axios Instance
@@ -27,12 +26,12 @@ API.interceptors.request.use((config) => {
 
 // LOGIN
 export const login = (email, password) => {
-  return API.post('/auth/login', { email, password });
+  return API.post('/users/login', { email, password });
 };
 
 // REGISTER
-export const register = (name, email, password, phone, kycStatus) => {
-  return API.post('/auth/register', { name, email, password, phone, kycStatus });
+export const register = (data) => {
+  return API.post('/users/register', data);
 };
 
 // DASHBOARD
@@ -40,14 +39,14 @@ export const getDashboard = () => {
   return API.get('/dashboard/overview');
 };
 
+
+// ================================
+// ACCOUNTS
+// ================================
+
 // ACCOUNTS
 export const getAccounts = () => {
   return API.get('/accounts');
-};
-
-// TRANSACTIONS
-export const getTransactions = () => {
-  return API.get('/transactions');
 };
 
 // CREATE ACCOUNT
@@ -60,11 +59,20 @@ export const deleteAccount = (accountId) => {
   return API.delete(`/accounts/${accountId}`);
 };
 
+
+// ================================
+// TRANSACTIONS
+// ================================
+
+// TRANSACTIONS
+export const getTransactions = () => {
+  return API.get('/transactions');
+};
+
 // CREATE TRANSACTION
 export const createTransaction = (data) => {
   return API.post('/transactions/', data);
 };
-
 
 // UPDATE TRANSACTION CATEGORY
 export const updateTransactionCategory = (transactionId, payload) => {
@@ -87,6 +95,7 @@ export const uploadTransactionsCSV = (accountId, file) => {
     },
   });
 };
+
 
 // ================================
 // BUDGETS
@@ -113,18 +122,47 @@ export const deleteBudget = (id) =>
   API.delete(`/budgets/${id}`);
 
 
-//  Global error handling (optional)
-API.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const message =
-      error.response?.data?.detail ||
-      error.response?.data?.message ||
-      'Something went wrong';
+// ================================
+// BILLS
+// ================================
 
-    toast.error(message);
-    return Promise.reject(error);
-  }
-);
+// GET all bills
+export const getBills = () => {
+  return API.get("/bills");
+};
+
+// CREATE bill
+export const createBill = (data) => {
+  return API.post("/bills", data);
+};
+
+// UPDATE bill
+export const updateBill = (id, data) => {
+  return API.put(`/bills/${id}`, data);
+};
+
+// DELETE bill
+export const deleteBill = (id) => {
+  return API.delete(`/bills/${id}`);
+};
+
+// ================================
+// Alerts
+// ===============================
+
+// GET unread alerts
+export const getAlerts = () => {
+  return API.get("/alerts");
+};
+
+// MARK alert as read
+export const markAlertRead = (alertId) => {
+  return API.patch(`/alerts/${alertId}/read`);
+};
+
+// UPDATE PROFILE
+export const updateProfile = (data) => {
+  return API.put("/users/me", data);
+};
 
 export default API;

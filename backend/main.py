@@ -5,13 +5,13 @@ import logging
 
 from .database import init_db, get_db, dispose_db
 from . import model
-from .routes.auth import router as auth_router
+from .routes import categories, bills, alerts
+from .routes.auth_routes import router as auth_router
 from .routes.accounts import router as accounts_router
 from .routes.transactions import router as transactions_router 
 from .routes.dashboard import router as dashboard_router
-from .routes import categories
 from .routes.budgets import router as budgets_router
-from .routes import bills
+from .routes.users import router as users_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,6 +68,14 @@ app.include_router(dashboard_router)
 app.include_router(categories.router)
 app.include_router(budgets_router)
 app.include_router(bills.router, prefix="/bills", tags=["Bills"])
+app.include_router(alerts.router)
+app.include_router(users_router)
+@app.get("/__debug/routes")
+async def debug_routes():
+    return [
+        {"path": route.path, "methods": list(route.methods)}
+        for route in app.routes
+    ]
 
 @app.get("/")
 async def root():
