@@ -17,6 +17,9 @@ from .database import Base
 import enum
 
 
+# =====================================`
+# ENUMS
+# =====================================
 
 class KYCStatus(enum.Enum):
     """KYC verification status"""
@@ -169,12 +172,15 @@ class Reward(Base):
     __tablename__ = "rewards"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
-    program_name = Column(String(50), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    program_name = Column(String(50), nullable=False)
     points_balance = Column(Integer, default=0)
-    last_updated = Column(DateTime, server_default=func.now())
+
+    point_value = Column(Numeric(10, 2), default=0.0)  
+    currency = Column(String(3), default="INR")         
+
+    last_updated = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class Alert(Base):

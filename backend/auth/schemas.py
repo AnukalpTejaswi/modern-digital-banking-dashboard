@@ -25,6 +25,11 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
+
 class UserResponse(BaseModel):
     """Schema for user data in responses (excludes password)"""
     id: int

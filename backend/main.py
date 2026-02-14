@@ -12,6 +12,7 @@ from .routes.transactions import router as transactions_router
 from .routes.dashboard import router as dashboard_router
 from .routes.budgets import router as budgets_router
 from .routes.users import router as users_router
+from .routes.rewards import router as rewards_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -70,6 +71,8 @@ app.include_router(budgets_router)
 app.include_router(bills.router, prefix="/bills", tags=["Bills"])
 app.include_router(alerts.router)
 app.include_router(users_router)
+app.include_router(rewards_router, prefix="/rewards", tags=["Rewards"]) 
+
 @app.get("/__debug/routes")
 async def debug_routes():
     return [

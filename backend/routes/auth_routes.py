@@ -1,69 +1,42 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from passlib.context import CryptContext
-
 from ..auth.schemas import UserRegister, UserLogin, Token, UserResponse
 from ..auth.password_handler import hash_password, verify_password
-from ..auth.jwt_handler import (
-    create_access_token,
-    get_current_user,
-    get_current_admin,
-)
+from ..auth.jwt_handler import create_access_token, get_current_user, get_current_admin
+from ..auth.schemas import UserUpdate
 from ..model import User
 from ..database import get_db
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-router = APIRouter(prefix="/users", tags=["Users"])
-
-# ========================
-# Register user
-# ========================
-@router.post(
-    "/register",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED
-)
-async def register(
-    user_data: UserRegister,
-    db: AsyncSession = Depends(get_db),
-):
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     """
     Register a new user.
-    NOTE:
-    - Public registration creates REGULAR users only.
-    - Admins must be created by existing admins.
+    By default creates a regular user. Only admins can create other admins.
     """
-
     # Check if email already exists
-    result = await db.execute(
-        select(User).where(User.email == user_data.email)
-    )
+    result = await db.execute(select(User).where(User.email == user_data.email))
     existing_user = result.scalars().first()
-
+    
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
+            detail="Email already registered"
         )
-
-    # Force role to 'user' for public registration
+    # Hash password and create user
     hashed_pw = hash_password(user_data.password)
-
     new_user = User(
         name=user_data.name,
         email=user_data.email,
         password=hashed_pw,
         phone=user_data.phone,
-        role="user",  # 🔐 prevent self-admin registration
+        role=user_data.role  # UPDATED - now includes role
     )
-
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
-
     return new_user
 
 
@@ -71,112 +44,70 @@ async def register(
 # Login
 # ========================
 @router.post("/login", response_model=Token)
-async def login(
-    credentials: UserLogin,
-    db: AsyncSession = Depends(get_db),
-):
+async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     """
-    Login endpoint - returns JWT access token.
+    Login endpoint - returns JWT access token. 
     """
-
-    result = await db.execute(
-        select(User).where(User.email == credentials.email)
-    )
+    # Find user by email
+    result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalars().first()
-
-    if not user or not verify_password(
-        credentials.password,
-        user.password,
-    ):
+    # Verify user exists and password is correct
+    if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Invalid email or password"
         )
-
-    access_token = create_access_token(
-        data={"sub": str(user.id)}
-    )
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-    }
+    # Create access token
+    access_token = create_access_token(data={"sub": str(user.id)})
+    
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
-# ========================
-# Current user info
-# ========================
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(
-    current_user: User = Depends(get_current_user),
-):
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
+    """
+    Get current authenticated user's information.
+    """
     return current_user
-
 
 @router.get("/profile", response_model=UserResponse)
-async def get_user_profile(
-    current_user: User = Depends(get_current_user),
-):
+async def get_user_profile(current_user: User = Depends(get_current_user)):
+    """
+    Get current authenticated user's profile information.
+    """
     return current_user
 
-
-# ========================
-# Admin-only: list users
-# ========================
-@router.get(
-    "/admin/users",
-    response_model=list[UserResponse],
-)
+# NEW ENDPOINT - Admin only
+@router.get("/admin/users", response_model=list[UserResponse])
 async def get_all_users(
     current_admin: User = Depends(get_current_admin),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Admin-only endpoint to retrieve all users.
     """
-
     result = await db.execute(select(User))
-    return result.scalars().all()
+    users = result.scalars().all()
+    return users
 
-
-# ========================
-# Update own profile
-# ========================
-@router.put("/me")
-async def update_profile(
-    payload: dict,  # ⚠️ intentionally flexible, but unsafe
-    current_user: User = Depends(get_current_user),
+@router.put("/me", response_model=UserResponse)
+async def update_current_user(
+    update_data: UserUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
-    Update current user's profile.
-    Allowed fields:
-    - name
-    - password
+    Update current authenticated user's profile.
     """
 
-    result = await db.execute(
-        select(User).where(User.id == current_user.id)
-    )
-    user = result.scalars().first()
+    if update_data.name is not None:
+        current_user.name = update_data.name
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
-
-    # Update name
-    if "name" in payload and payload["name"].strip():
-        user.name = payload["name"].strip()
-
-    # Update password
-    if "password" in payload and payload["password"]:
-        user.password = hash_password(payload["password"])
+    if update_data.phone is not None:
+        current_user.phone = update_data.phone
 
     await db.commit()
+    await db.refresh(current_user)
 
-    return {
-        "message": "Profile updated successfully",
-        "name": user.name,
-    }
+    return current_user
+

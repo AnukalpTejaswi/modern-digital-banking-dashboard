@@ -51,19 +51,6 @@ function BudgetsSection() {
     setIsModalOpen(true);
   };
 
-  // ==============================
-  // Helpers for progress bar
-  // ==============================
-  const calculatePercentage = (spent, limit) => {
-    if (!limit || limit === 0) return 0;
-    return Math.min(Math.round((spent / limit) * 100), 100);
-  };
-
-  const getBarColor = (percentage) => {
-    if (percentage <= 60) return "bg-green-500";
-    if (percentage <= 90) return "bg-yellow-400";
-    return "bg-red-500";
-  };
 
   return (
     <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6">
@@ -104,10 +91,6 @@ function BudgetsSection() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {budgets.categories.map((budget) => {
-                const percentage = calculatePercentage(
-                  budget.spent_amount,
-                  budget.limit_amount
-                );
 
                 return (
                   <div key={budget.id} className="space-y-2">
@@ -116,8 +99,6 @@ function BudgetsSection() {
                       onEdit={handleEdit}
                       onDelete={handleDelete}
                     />
-
-                    {/* Progress bar */}
 
                   </div>
                 );

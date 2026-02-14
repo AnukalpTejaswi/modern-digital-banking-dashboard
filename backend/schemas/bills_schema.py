@@ -26,4 +26,4 @@ class BillResponseSchema(BaseModel):
     auto_pay: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True

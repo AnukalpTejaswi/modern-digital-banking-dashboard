@@ -13,6 +13,7 @@ import Bills from "./pages/Bills";
 import { DateProvider } from "./context/DateContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
+import Rewards from "./pages/Rewards";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -46,6 +47,7 @@ function App() {
             <Route path="budgets" element={<Budgets />} />
             <Route path="bills" element={<Bills />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="rewards" element={<Rewards />} />
           </Route>
 
           {/* Fallback */}

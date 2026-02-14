@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session 
 from sqlalchemy import select, func
 from datetime import datetime
 
@@ -14,6 +15,8 @@ from ..routes.dashboard_schema import (
     DashboardTransactionResponse,
     DashboardSummary,
 )
+from ..services.currency_service import fetch_exchange_rates, convert_amount
+from sqlalchemy import select
 
 router = APIRouter(
     prefix="/dashboard",
@@ -249,3 +252,34 @@ async def get_accounts_with_stats(
         )
 
     return result
+
+@router.get("/summary")
+async def get_summary(
+    target_currency: str = "INR",
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    # Get user accounts
+    result = await db.execute(
+        select(Account).where(Account.user_id == current_user.id)
+    )
+    accounts = result.scalars().all()
+
+    # Fetch exchange rates
+    rates_data = fetch_exchange_rates(target_currency)
+
+    total_balance = 0
+
+    for account in accounts:
+        converted = convert_amount(
+            amount=float(account.balance),
+            from_currency=account.currency,
+            to_currency=target_currency,
+            rates_data=rates_data
+        )
+        total_balance += converted
+
+    return {
+        "target_currency": target_currency,
+        "total_balance": round(total_balance, 2)
+    }

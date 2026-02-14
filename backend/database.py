@@ -60,8 +60,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     async with engine.begin() as conn:
-        await conn.execute(text("SELECT 1"))
-        print("Database connection successful!")
+        await conn.run_sync(Base.metadata.create_all)
+        print("All tables created successfully!")
 
 
 async def dispose_db():

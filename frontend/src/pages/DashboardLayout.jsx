@@ -193,23 +193,34 @@ function DashboardLayout() {
       ======================== */}
       <div className="flex flex-1 p-6 gap-6">
         {/* Sidebar */}
-        <aside className="w-64 bg-white rounded-xl shadow p-4 space-y-2">
-          <NavLink to="/dashboard" end className="block p-3 rounded hover:bg-indigo-50">
-            Overview
-          </NavLink>
-          <NavLink to="/dashboard/accounts" className="block p-3 rounded hover:bg-indigo-50">
-            Accounts
-          </NavLink>
-          <NavLink to="/dashboard/budgets" className="block p-3 rounded hover:bg-indigo-50">
-            Budgets
-          </NavLink>
-          <NavLink to="/dashboard/bills" className="block p-3 rounded hover:bg-indigo-50">
-            Bills
-          </NavLink>
-          <NavLink to="/dashboard/profile" className="block p-3 rounded hover:bg-indigo-50">
-            Profile
-          </NavLink>
+        <aside className="w-64 bg-white rounded-xl shadow p-4 flex flex-col min-h-[calc(100vh-120px)]">
+
+          <div className="space-y-2">
+            <NavLink to="/dashboard" end className="block p-2 rounded hover:bg-indigo-50">
+              Overview
+            </NavLink>
+            <NavLink to="/dashboard/accounts" className="block p-2 rounded hover:bg-indigo-50">
+              Accounts
+            </NavLink>
+            <NavLink to="/dashboard/budgets" className="block p-2 rounded hover:bg-indigo-50">
+              Budgets
+            </NavLink>
+            <NavLink to="/dashboard/bills" className="block p-2 rounded hover:bg-indigo-50">
+              Bills
+            </NavLink>
+            <NavLink to="/dashboard/rewards" className="block p-2 rounded hover:bg-indigo-50">
+              Rewards
+            </NavLink>
+          </div>
+
+          <div className="pt-4 border-t mt-auto">
+            <NavLink to="/dashboard/profile" className="block p-2 rounded hover:bg-indigo-50">
+              Profile
+            </NavLink>
+          </div>
+
         </aside>
+
 
         {/* Main content */}
         <main className="flex-1 bg-white rounded-xl shadow p-6">

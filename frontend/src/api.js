@@ -26,12 +26,12 @@ API.interceptors.request.use((config) => {
 
 // LOGIN
 export const login = (email, password) => {
-  return API.post('/users/login', { email, password });
+  return API.post('/auth/login', { email, password });
 };
 
 // REGISTER
 export const register = (data) => {
-  return API.post('/users/register', data);
+  return API.post('/auth/register', data);
 };
 
 // DASHBOARD
@@ -84,7 +84,7 @@ export const deleteTransaction = (transactionId) => {
   return API.delete(`/transactions/${transactionId}`);
 };
 
-//  UPLOAD TRANSACTIONS VIA CSV
+// UPLOAD TRANSACTIONS VIA CSV
 export const uploadTransactionsCSV = (accountId, file) => {
   const formData = new FormData();
   formData.append('file', file);
@@ -162,7 +162,27 @@ export const markAlertRead = (alertId) => {
 
 // UPDATE PROFILE
 export const updateProfile = (data) => {
-  return API.put("/users/me", data);
+  return API.put("/auth/me", data);
 };
+
+// ===============================
+// Rewards APIs
+// ===============================
+export const getRewards = () => {
+  return API.get("/rewards/");
+};
+
+export const createReward = (data) => {
+  return API.post("/rewards/", data);
+};
+
+export const updateReward = (id, data) => {
+  return API.put(`/rewards/${id}`, data);
+};
+
+export const getRewardSummary = (currency) => {
+  return API.get(`/rewards/summary?target_currency=${currency}`);
+};
+
 
 export default API;
