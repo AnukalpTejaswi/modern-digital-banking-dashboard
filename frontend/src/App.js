@@ -5,7 +5,6 @@ import Register from "./Register";
 
 import DashboardLayout from "./pages/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
-import Overview from "./pages/Overview";
 import Accounts from "./pages/Accounts";
 import AccountDetails from "./pages/AccountDetails";
 import Budgets from "./pages/Budgets";
@@ -14,6 +13,7 @@ import { DateProvider } from "./context/DateContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
 import Rewards from "./pages/Rewards";
+import Alerts from "./pages/Alerts";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -48,6 +48,8 @@ function App() {
             <Route path="bills" element={<Bills />} />
             <Route path="profile" element={<Profile />} />
             <Route path="rewards" element={<Rewards />} />
+            <Route path="alerts" element={<Alerts />} />
+
           </Route>
 
           {/* Fallback */}

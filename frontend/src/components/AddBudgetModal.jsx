@@ -29,6 +29,8 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
   // Populate form when editing
   // ========================
   useEffect(() => {
+    const now = new Date();
+
     if (budget) {
       setFormData((prev) => ({
         ...prev,
@@ -44,6 +46,7 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
       });
     }
   }, [budget]);
+
 
   // Do not render modal if closed
   if (!isOpen) return null;
@@ -99,7 +102,7 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.5)'}}>
       <div className="bg-white rounded-xl p-6 w-full max-w-md">
         <h2 className="text-xl font-bold mb-4">
           {budget ? "Edit Budget" : "Add Budget"}
@@ -123,11 +126,16 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
               disabled={!!budget} // prevent editing month
               className="w-full border rounded px-3 py-2"
             >
-              {MONTHS.map((m, i) => (
-                <option key={m} value={i + 1}>
-                  {m}
-                </option>
-              ))}
+              {MONTHS.map((m, i) => {
+                // Disable previous months for current year
+                const isPast =
+                  formData.year === now.getFullYear() && i + 1 < now.getMonth() + 1;
+                return (
+                  <option key={m} value={i + 1} disabled={!budget && isPast}>
+                    {m}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -149,7 +157,7 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
             >
               {[now.getFullYear(), now.getFullYear() + 1, now.getFullYear() + 2].map(
                 (y) => (
-                  <option key={y} value={y}>
+                  <option key={y} value={y} disabled={!budget && y < now.getFullYear()}>
                     {y}
                   </option>
                 )

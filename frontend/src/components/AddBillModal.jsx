@@ -75,7 +75,7 @@ function AddBillModal({ isOpen, onClose, onBillAdded }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.5)'}}>
             <div className="bg-white rounded-xl shadow p-6 w-full max-w-md">
                 <h2 className="text-lg font-bold mb-4">Add Bill</h2>
 

@@ -5,7 +5,7 @@ import logging
 
 from .database import init_db, get_db, dispose_db
 from . import model
-from .routes import categories, bills, alerts
+from .routes import categories, bills, alerts, export
 from .routes.auth_routes import router as auth_router
 from .routes.accounts import router as accounts_router
 from .routes.transactions import router as transactions_router 
@@ -13,6 +13,7 @@ from .routes.dashboard import router as dashboard_router
 from .routes.budgets import router as budgets_router
 from .routes.users import router as users_router
 from .routes.rewards import router as rewards_router
+from .routes import insights
 
 logging.basicConfig(
     level=logging.INFO,
@@ -51,8 +52,6 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -72,6 +71,8 @@ app.include_router(bills.router, prefix="/bills", tags=["Bills"])
 app.include_router(alerts.router)
 app.include_router(users_router)
 app.include_router(rewards_router, prefix="/rewards", tags=["Rewards"]) 
+app.include_router(insights.router)
+app.include_router(export.router)
 
 @app.get("/__debug/routes")
 async def debug_routes():

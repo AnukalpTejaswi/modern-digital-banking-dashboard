@@ -8,7 +8,6 @@ function AddTransactionModal({
   accountId,
   onTransactionAdded,
 }) {
-    const [merchant, setMerchant] = useState('');
     const INITIAL_FORM_STATE = {
     amount: '',
     txn_type: 'debit',
@@ -17,7 +16,7 @@ function AddTransactionModal({
     merchant: '',
     currency: 'INR',
     txn_date: '',
-    posted_date: '',
+    posted_date: new Date().toISOString().slice(0, 10), // Default to today
     };
     const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
@@ -26,6 +25,19 @@ function AddTransactionModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent negative or zero amount
+    if (Number(formData.amount) <= 0) {
+      showError('Amount must be greater than zero');
+      return;
+    }
+
+    // Prevent future-dated transactions
+    const today = new Date().toISOString().slice(0, 10);
+    if (formData.txn_date > today) {
+      showError('Transaction date cannot be in the future');
+      return;
+    }
 
     try {
       await createTransaction({
@@ -37,7 +49,7 @@ function AddTransactionModal({
         merchant: formData.merchant.trim(),
         currency: formData.currency,
         txn_date: formData.txn_date,
-        posted_date: formData.posted_date || null,
+        posted_date: today, // Always use system date
       });
 
       showSuccess('Transaction added successfully');
@@ -51,7 +63,7 @@ function AddTransactionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.5)'}}>
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
         <h2 className="text-xl font-bold mb-4">Add Transaction</h2>
 
@@ -60,6 +72,7 @@ function AddTransactionModal({
           <input
             type="number"
             step="0.01"
+            min="0.01"
             required
             placeholder="Amount"
             className="w-full border p-2 rounded"
@@ -81,6 +94,7 @@ function AddTransactionModal({
             <option value="credit">Credit (Income)</option>
           </select>
 
+
           {/* Category */}
           <select
             className="w-full border p-2 rounded"
@@ -101,6 +115,23 @@ function AddTransactionModal({
             <option>Others</option>
           </select>
 
+          {/* Currency */}
+          <select
+            className="w-full border p-2 rounded"
+            value={formData.currency}
+            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+          >
+            <option value="INR">INR (₹)</option>
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="JPY">JPY (¥)</option>
+            <option value="AUD">AUD (A$)</option>
+            <option value="CAD">CAD (C$)</option>
+            <option value="SGD">SGD (S$)</option>
+            <option value="CNY">CNY (¥)</option>
+          </select>
+
           {/* Description */}
           <input
             type="text"
@@ -118,6 +149,7 @@ function AddTransactionModal({
             placeholder="Merchant"
             className="w-full border p-2 rounded"
             value={formData.merchant}
+            required
             onChange={(e) =>
                 setFormData({ ...formData, merchant: e.target.value })
             }
@@ -130,21 +162,11 @@ function AddTransactionModal({
           <input
             type="date"
             required
+            max={new Date().toISOString().slice(0, 10)}
             className="w-full border p-2 rounded"
             value={formData.txn_date}
             onChange={(e) =>
               setFormData({ ...formData, txn_date: e.target.value })
-            }
-          />
-
-          {/* Posted Date */}
-          <label className="block text-sm font-medium mb-1">Posted Date (optional)</label>
-          <input
-            type="date"
-            className="w-full border p-2 rounded"
-            value={formData.posted_date}
-            onChange={(e) =>
-              setFormData({ ...formData, posted_date: e.target.value })
             }
           />
 

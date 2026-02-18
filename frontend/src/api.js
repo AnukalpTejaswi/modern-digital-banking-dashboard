@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 // ==========================================
@@ -35,8 +36,10 @@ export const register = (data) => {
 };
 
 // DASHBOARD
-export const getDashboard = () => {
-  return API.get('/dashboard/overview');
+export const getDashboard = (month, year) => {
+  return API.get('/dashboard/overview', {
+    params: { month, year }
+  });
 };
 
 
@@ -148,17 +151,25 @@ export const deleteBill = (id) => {
 
 // ================================
 // Alerts
-// ===============================
+// ================================
 
-// GET unread alerts
-export const getAlerts = () => {
-  return API.get("/alerts");
+// Generate alerts
+export const generateAlerts = () => {
+  return API.post("/alerts/generate");
 };
 
-// MARK alert as read
-export const markAlertRead = (alertId) => {
+// Get alerts
+export const getAlerts = (unreadOnly = false) => {
+  return API.get("/alerts", {
+    params: { unread_only: unreadOnly },
+  });
+};
+
+// Mark alert as read
+export const markAlertAsRead = (alertId) => {
   return API.patch(`/alerts/${alertId}/read`);
 };
+
 
 // UPDATE PROFILE
 export const updateProfile = (data) => {
@@ -183,6 +194,26 @@ export const updateReward = (id, data) => {
 export const getRewardSummary = (currency) => {
   return API.get(`/rewards/summary?target_currency=${currency}`);
 };
+
+// ================================
+// Insights
+// ================================
+export const getInsights = (month, year) => {
+  return API.get("/insights", {
+    params: { month, year },
+  });
+};
+
+// Get current authenticated user
+export const getCurrentUser = () => {
+  return API.get("/auth/me");
+};
+
+export const exportInsightsPDF = (month, year) =>
+  API.get(`/export/pdf?month=${month}&year=${year}`, { responseType: "blob" });
+
+export const exportInsightsCSV = (month, year) =>
+  API.get(`/export/csv?month=${month}&year=${year}`, { responseType: "blob" });
 
 
 export default API;

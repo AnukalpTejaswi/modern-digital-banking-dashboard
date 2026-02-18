@@ -28,6 +28,8 @@ class Token(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
+    old_password: Optional[str] = None
+    new_password: Optional[str] = None
 
 
 class UserResponse(BaseModel):

@@ -10,6 +10,19 @@ from ..database import get_db
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from ..auth.schemas import UserRegister, UserLogin, Token, UserResponse
+from ..auth.password_handler import hash_password, verify_password
+from ..auth.jwt_handler import create_access_token, get_current_user, get_current_admin
+from ..auth.schemas import UserUpdate
+from ..model import User
+from ..database import get_db
+
+
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     """
@@ -100,11 +113,23 @@ async def update_current_user(
     Update current authenticated user's profile.
     """
 
+
     if update_data.name is not None:
         current_user.name = update_data.name
 
     if update_data.phone is not None:
         current_user.phone = update_data.phone
+
+    # Password change logic
+    if update_data.old_password and update_data.new_password:
+        from ..auth.password_handler import verify_password, hash_password
+        if not verify_password(update_data.old_password, current_user.password):
+            from fastapi import HTTPException, status
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect."
+            )
+        current_user.password = hash_password(update_data.new_password)
 
     await db.commit()
     await db.refresh(current_user)

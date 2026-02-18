@@ -1,1 +1,5 @@
-amount,txn_type,category,description,merchant,currency,txn_date,posted_date
+amount,txn_type,merchant,txn_date,description,category,currency
+1000,credit,Salary,2026-02-01,Monthly salary,Income,INR
+250,debit,Amazon,2026-02-10,Online shopping,Shopping,INR
+50,debit,Starbucks,2026-02-12,Coffee,Food,INR
+500,debit,Rent,2026-02-01,Monthly rent,Housing,INR

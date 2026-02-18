@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createAccount } from '../api'; 
-import { showSuccess, showError } from '../utils/toast';    // Notification library
+import { showSuccess } from '../utils/toast';    // Notification library
 
 function AddAccountModal({ isOpen, onClose, onAccountAdded }) {
   const [formData, setFormData] = useState({
@@ -26,7 +26,7 @@ function AddAccountModal({ isOpen, onClose, onAccountAdded }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.5)'}}>
       <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4">Add New Account</h2>
 

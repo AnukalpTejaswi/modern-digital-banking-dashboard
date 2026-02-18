@@ -220,13 +220,11 @@ async def upload_transactions_csv(
         contents = await file.read()
         decoded = contents.decode("utf-8")
         csv_reader = csv.DictReader(io.StringIO(decoded))
-        required_columns = {
-        "amount", "txn_type", "merchant", "txn_date"
-        }
-        if not required_columns.issubset(csv_reader.fieldnames):
+        required_columns = {"amount", "txn_type", "merchant", "txn_date"}
+        if not csv_reader.fieldnames or not required_columns.issubset(set(map(str.lower, csv_reader.fieldnames))):
             raise HTTPException(
                 status_code=400,
-                detail=f"CSV must contain columns: {required_columns}"
+                detail=f"CSV must contain columns: {sorted(list(required_columns))}"
             )
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid CSV file")
@@ -236,23 +234,53 @@ async def upload_transactions_csv(
 
     for row in csv_reader:
         try:
-            print("CSV ROW:", row)  
-            merchant = row.get("merchant")
-            if not merchant or not merchant.strip():
+            # Normalize keys to lower-case for robustness
+            row = {k.lower(): v for k, v in row.items()}
+            merchant = row.get("merchant", "").strip()
+            txn_type_val = row.get("txn_type", "").lower().strip()
+            amount_str = row.get("amount", "").strip()
+            txn_date_str = row.get("txn_date", "").strip()
+
+            # Required field validation
+            if not merchant or not txn_type_val or not amount_str or not txn_date_str:
                 rows_skipped += 1
                 continue
 
-            txn_type = TransactionType(row["txn_type"].lower())
-            amount = Decimal(str(row["amount"]))
-            txn_date = parse_date(row["txn_date"])
+            # Validate amount
+            try:
+                amount = Decimal(amount_str)
+                if amount <= 0:
+                    rows_skipped += 1
+                    continue
+            except (InvalidOperation, ValueError):
+                rows_skipped += 1
+                continue
 
+            # Validate txn_type
+            try:
+                txn_type = TransactionType(txn_type_val)
+            except Exception:
+                rows_skipped += 1
+                continue
 
+            # Validate txn_date (no future dates)
+            try:
+                txn_date = parse_date(txn_date_str)
+                if txn_date.date() > date.today():
+                    rows_skipped += 1
+                    continue
+            except Exception:
+                rows_skipped += 1
+                continue
+
+            # Category
             category = (row.get("category") or "").strip()
             if not category:
-
                 category = auto_assign_category(
                     f"{merchant} {row.get('description', '')}"
                 )
+
+            # Duplicate check
             duplicate_query = select(Transaction).where(
                 Transaction.account_id == account_id,
                 Transaction.amount == amount,
@@ -260,7 +288,6 @@ async def upload_transactions_csv(
                 Transaction.merchant == merchant,
                 Transaction.txn_date == txn_date,
             )
-
             existing = await db.execute(duplicate_query)
             if existing.scalars().first():
                 rows_skipped += 1
@@ -277,7 +304,6 @@ async def upload_transactions_csv(
                 txn_date=txn_date,
                 posted_date=datetime.now(timezone.utc),
             )
-
             db.add(txn)
 
             if txn_type == TransactionType.credit:
@@ -295,8 +321,6 @@ async def upload_transactions_csv(
                     txn_date=txn_date,
                     txn_amount=amount,
                 )
-
-
         except Exception as e:
             print("CSV SKIPPED ROW:", row, "ERROR:", e)
             rows_skipped += 1

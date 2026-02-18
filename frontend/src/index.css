@@ -1,23 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@layer base {
-  body {
-    @apply bg-gray-100 text-gray-800 antialiased;
-  }
-}
-.Toastify__toast {
-  border-radius: 12px;
-  font-weight: 500;
-}
-@keyframes shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  50% { transform: translateX(2px); }
-  75% { transform: translateX(-2px); }
-  100% { transform: translateX(0); }
+
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS  –  Light theme (default)
+═══════════════════════════════════════════════════════════════ */
+:root {
+  /* Backgrounds */
+  --bg-base:        #f4f4fb;
+  --sidebar-bg:     #ffffff;
+  --header-bg:      rgba(255,255,255,0.80);
+  --card-bg:        #ffffff;
+  --tooltip-bg:     #ffffff;
+
+  /* Borders & shadows */
+  --border:         #e8e8f0;
+  --card-shadow:    0 1px 3px rgba(99,102,241,0.07), 0 4px 16px rgba(99,102,241,0.04);
+
+  /* Text */
+  --text-primary:   #1a1b2e;
+  --text-secondary: #4b4d6b;
+  --text-muted:     #9396b5;
+
+  /* Accent – indigo/violet */
+  --accent:         #6366f1;
+  --accent-dark:    #4f46e5;
+  --accent-light:   #ede9fe;
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+
+  /* Semantic */
+  --income-light:   #dcfce7;
+  --expense-light:  #fee2e2;
+  --danger:         #ef4444;
+  --success:        #22c55e;
 }
 
-.animate-shake {
-  animation: shake 0.5s ease-in-out;
+/* ═══════════════════════════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════════════════════════ */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply antialiased;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+
+  /* Remove default select arrow styling issues */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NAV LINK STATES
+═══════════════════════════════════════════════════════════════ */
+@layer components {
+  .nav-active {
+    background: var(--accent-light);
+  }
+
+  .nav-inactive:hover {
+    background: var(--bg-base);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════════════════ */
+@layer utilities {
+
+  /* Page fade-in */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.45s ease-out both;
+  }
+
+  /* Card stagger */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out both;
+  }
+
+  /* Shake (keep existing) */
+  @keyframes shake {
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-2px); }
+    50%  { transform: translateX(2px); }
+    75%  { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+  }
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  /* Progress bar fill */
+  @keyframes fillBar {
+    from { width: 0%; }
+    to   { width: var(--bar-width); }
+  }
+  .animate-fill-bar {
+    animation: fillBar 0.8s ease-out both;
+  }
+
+  /* Pulse dot for live indicators */
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.85); }
+  }
+  .animate-pulse-dot {
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST OVERRIDES
+═══════════════════════════════════════════════════════════════ */
+.Toastify__toast {
+  border-radius: 14px !important;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RECHARTS OVERRIDES  –  make axis lines respect theme
+═══════════════════════════════════════════════════════════════ */
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--border) !important;
+}
+.recharts-legend-item-text {
+  color: var(--text-secondary) !important;
 }

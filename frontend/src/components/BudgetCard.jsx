@@ -1,126 +1,148 @@
 import { useEffect, useState } from "react";
+import { CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2 } from "lucide-react";
 
-function BudgetCard({ budget, onEdit, onDelete, variant = "normal" }) {
-  const {
-    category,
-    limit_amount,
-    spent_amount,
-    remaining_amount,
-    is_over_budget,
-  } = budget;
+function BudgetCard({ budget, onEdit, onDelete }) {
+  const { category, limit_amount, spent_amount, remaining_amount, is_over_budget } = budget;
 
-  const isOverall = category === null;
   const WARNING_THRESHOLD = 70;
 
   const percentUsed =
-    limit_amount > 0
-      ? Math.min((spent_amount / limit_amount) * 100, 100)
-      : 0;
+    limit_amount > 0 ? Math.min((spent_amount / limit_amount) * 100, 100) : 0;
 
   const [animatedWidth, setAnimatedWidth] = useState(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimatedWidth(percentUsed);
-    }, 100);
-
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setAnimatedWidth(percentUsed), 120);
+    return () => clearTimeout(t);
   }, [percentUsed]);
 
-  const statusLabel =
-    percentUsed >= 100
-      ? "Limit Reached"
-      : percentUsed >= WARNING_THRESHOLD
-      ? "Near Limit"
-      : "On Track";
+  // ── Status config ────────────────────────────────────────────────────────
+  const isOver    = percentUsed >= 100;
+  const isNear    = percentUsed >= WARNING_THRESHOLD && !isOver;
+  const isOnTrack = !isOver && !isNear;
 
-  const statusStyle =
-    variant === "hero"
-      ? "bg-white/20 text-white"
-      : percentUsed >= 100
-      ? "bg-red-100 text-red-700"
-      : percentUsed >= WARNING_THRESHOLD
-      ? "bg-yellow-100 text-yellow-700"
-      : "bg-green-100 text-green-700";
+  const statusConfig = isOver
+    ? { label: "Over Budget",  icon: XCircle,       color: "#ef4444", bg: "#fee2e2", bar: "#ef4444" }
+    : isNear
+    ? { label: "Near Limit",   icon: AlertTriangle,  color: "#f59e0b", bg: "#fef9c3", bar: "#f59e0b" }
+    : { label: "On Track",     icon: CheckCircle2,   color: "#22c55e", bg: "#dcfce7", bar: "var(--accent)" };
 
-  const cardBg = 
-    percentUsed >= 100
-      ? "bg-red-50"
-      : percentUsed >= 70
-      ? "bg-yellow-50"
-      : "bg-white";
+  const { label, icon: StatusIcon, color, bg, bar } = statusConfig;
 
-  const barColor =
-    percentUsed >= 100
-      ? "bg-red-500"
-      : percentUsed >= WARNING_THRESHOLD
-      ? "bg-yellow-400"
-      : "bg-green-500";
+  // ── Formatted values ─────────────────────────────────────────────────────
+  const fmt = (n) =>
+    `₹${Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
-      
   return (
     <div
-        className={`rounded-xl p-4 shadow ${cardBg} ${
-          percentUsed >= 100 ? "animate-shake" : ""
-        }`}
-      >
-      {/* Header */}
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-semibold text-lg">
-          {category || "Monthly Budget"}
-        </h3>
+      className={`rounded-2xl p-5 transition-all duration-200 hover:-translate-y-0.5 group ${
+        isOver ? "animate-shake" : ""
+      }`}
+      style={{
+        background: "var(--card-bg)",
+        border: `1px solid ${isOver ? "#fecaca" : isNear ? "#fde68a" : "var(--border)"}`,
+        boxShadow: "var(--card-shadow)",
+      }}
+    >
+      {/* ── HEADER ────────────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          {/* Category icon */}
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+            style={{ background: isOver ? "#ef4444" : isNear ? "#f59e0b" : "var(--accent-gradient)" }}
+          >
+            {(category || "OA").slice(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <h3
+              className="font-semibold text-sm leading-tight"
+              style={{ color: "var(--text-primary)", fontFamily: "'Sora', sans-serif" }}
+            >
+              {category || "Overall Budget"}
+            </h3>
+            <p
+              className="text-xs mt-0.5"
+              style={{ color: "var(--text-muted)", fontFamily: "'DM Sans', sans-serif" }}
+            >
+              Limit: {fmt(limit_amount)}
+            </p>
+          </div>
+        </div>
 
-        <span
-          className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyle}`}
-        >
-          {percentUsed >= 100 ? "⚠️" : "✅"} {statusLabel}
-        </span>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
+        {/* Status badge */}
         <div
-          className={`h-2 rounded-full transition-all duration-700 ease-out ${barColor}`}
-          style={{ width: `${animatedWidth}%` }}
-        />
+          className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-medium flex-shrink-0"
+          style={{ background: bg, color }}
+        >
+          <StatusIcon size={11} />
+          <span style={{ fontFamily: "'DM Sans', sans-serif" }}>{label}</span>
+        </div>
       </div>
 
-      {/* Percentage */}
-      <p className="text-xs text-center text-gray-500 mb-2">
-        {Math.round(percentUsed)}% used
-      </p>
-
-      {/* Footer */}
-      <p className="text-center mb-2">
-        {is_over_budget ? (
-          <span className="text-red-600 font-medium">
-            Over by ₹{Math.abs(remaining_amount)}
+      {/* ── PROGRESS BAR ──────────────────────────────────────────────── */}
+      <div className="mb-3">
+        <div
+          className="h-2 rounded-full overflow-hidden"
+          style={{ background: "var(--bg-base)" }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${animatedWidth}%`, background: bar }}
+          />
+        </div>
+        <div className="flex justify-between mt-1.5">
+          <span
+            className="text-xs"
+            style={{ color: "var(--text-muted)", fontFamily: "'DM Sans', sans-serif" }}
+          >
+            {fmt(spent_amount)} spent
           </span>
-        ) : (
-          <span className="text-slate-600">
-            ₹{remaining_amount} remaining
+          <span
+            className="text-xs font-semibold"
+            style={{ color, fontFamily: "'DM Sans', sans-serif" }}
+          >
+            {Math.round(percentUsed)}%
           </span>
-        )}
-      </p>
+        </div>
+      </div>
 
-      <div className="flex justify-between items-center">
-        <h3 className="font-semibold">
-          {isOverall ? "Monthly Budget" : category}
-        </h3>
+      {/* ── FOOTER ────────────────────────────────────────────────────── */}
+      <div
+        className="flex items-center justify-between pt-3"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        {/* Remaining / over */}
+        <div>
+          {is_over_budget ? (
+            <p className="text-xs font-semibold" style={{ color: "#ef4444", fontFamily: "'DM Sans', sans-serif" }}>
+              Over by {fmt(Math.abs(remaining_amount))}
+            </p>
+          ) : (
+            <p className="text-xs font-medium" style={{ color: "var(--text-muted)", fontFamily: "'DM Sans', sans-serif" }}>
+              {fmt(remaining_amount)}{" "}
+              <span style={{ color: "var(--text-muted)" }}>remaining</span>
+            </p>
+          )}
+        </div>
 
-        <div className="flex gap-2 text-sm">
+        {/* Actions — visible on hover */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button
             onClick={() => onEdit(budget)}
-            className="text-blue-600 hover:underline"
+            className="p-1.5 rounded-lg transition-colors duration-200"
+            style={{ color: "var(--accent)" }}
+            title="Edit budget"
           >
-            Edit
+            <Pencil size={13} />
           </button>
-
           <button
             onClick={() => onDelete(budget.id)}
-            className="text-red-600 hover:underline"
+            className="p-1.5 rounded-lg transition-colors duration-200 hover:bg-red-50"
+            style={{ color: "var(--danger)" }}
+            title="Delete budget"
           >
-            Delete
+            <Trash2 size={13} />
           </button>
         </div>
       </div>
