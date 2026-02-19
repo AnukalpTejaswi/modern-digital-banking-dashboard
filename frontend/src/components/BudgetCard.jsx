@@ -19,7 +19,6 @@ function BudgetCard({ budget, onEdit, onDelete }) {
   // ── Status config ────────────────────────────────────────────────────────
   const isOver    = percentUsed >= 100;
   const isNear    = percentUsed >= WARNING_THRESHOLD && !isOver;
-  const isOnTrack = !isOver && !isNear;
 
   const statusConfig = isOver
     ? { label: "Over Budget",  icon: XCircle,       color: "#ef4444", bg: "#fee2e2", bar: "#ef4444" }

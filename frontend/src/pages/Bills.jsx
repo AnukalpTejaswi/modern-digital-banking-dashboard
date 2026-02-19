@@ -11,7 +11,6 @@ import {
   Trash2,
   CheckCheck,
   Receipt,
-  TrendingDown,
 } from "lucide-react";
 
 const MONTHS = [

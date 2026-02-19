@@ -110,11 +110,6 @@ function Alerts() {
   // ── Derived stats ────────────────────────────────────────────────────────
   const unreadCount = alerts.filter((a) => !a.is_read).length;
 
-  const alertTypes = useMemo(() =>
-    [...new Set(alerts.map((a) => a.alert_type))],
-    [alerts]
-  );
-
   // ── Filtered alerts ──────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let list = [...alerts];

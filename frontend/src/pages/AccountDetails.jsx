@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   getTransactions,
@@ -50,7 +50,7 @@ function AccountDetails() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortOrder, setSortOrder] = useState("desc"); // desc | asc
 
-  const loadAccountData = async () => {
+  const loadAccountData = useCallback(async () => {
     try {
       const [txnRes, accRes] = await Promise.all([
         getTransactions(),
@@ -67,11 +67,11 @@ function AccountDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [accountId]);
 
   useEffect(() => {
     loadAccountData();
-  }, [accountId]);
+  }, [loadAccountData]);
 
   const handleDeleteTransaction = (txnId) => {
     showConfirm("Delete this transaction?", async () => {
