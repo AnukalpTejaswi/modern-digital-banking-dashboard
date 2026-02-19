@@ -73,7 +73,12 @@ function Register() {
 
     setLoading(true);
     try {
-      await register(name, email, password, phone);
+        await register({
+          name,
+          email,
+          password,
+          phone,
+        });
       showSuccess('Account created successfully');
       navigate('/login');
     } catch (err) {
@@ -172,26 +177,14 @@ function Register() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="form-input"
                   placeholder="••••••••"
-                  style={{ paddingRight: '2.5rem' }}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((v) => !v)}
+                  onClick={() => setShowPassword(!showPassword)}
                   className="password-toggle"
                   tabIndex={-1}
-                  style={{
-                    position: 'absolute',
-                    right: '0.75rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    margin: 0,
-                    cursor: 'pointer'
-                  }}
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
 
@@ -260,26 +253,14 @@ function Register() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`form-input ${passwordsMatch ? 'input-success' : passwordsDontMatch ? 'input-error' : ''}`}
                   placeholder="••••••••"
-                  style={{ paddingRight: '2.5rem' }}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="password-toggle"
                   tabIndex={-1}
-                  style={{
-                    position: 'absolute',
-                    right: '0.75rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    margin: 0,
-                    cursor: 'pointer'
-                  }}
                 >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
                 {passwordsMatch && (
                   <div className="password-match-icon success">
