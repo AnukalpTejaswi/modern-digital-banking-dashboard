@@ -5,7 +5,7 @@ import axios from 'axios';
 // STEP 1: Create Axios Instance
 // ==========================================
 const API = axios.create({
-  baseURL: 'https://modern-digital-banking-dashboard-hto6.onrender.com',
+  baseURL: process.env.REACT_APP_API_URL,
 });
 
 // ==========================================
