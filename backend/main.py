@@ -49,7 +49,7 @@ app = FastAPI(
 
 origins = [
     "http://localhost:3000",
-    "https://modern-digital-banking-dashboard.vercel.app",
+    "modern-digital-banking-dashboard-three.vercel.app",
 ]
 
 app.add_middleware(
