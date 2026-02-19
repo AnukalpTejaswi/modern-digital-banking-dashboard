@@ -150,11 +150,18 @@
 /* ═══════════════════════════════════════════════════════════════
    TOAST OVERRIDES
 ═══════════════════════════════════════════════════════════════ */
+
 .Toastify__toast {
   border-radius: 14px !important;
   font-weight: 500;
   font-family: 'DM Sans', sans-serif;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+  box-shadow: var(--card-shadow) !important;
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+.Toastify__progress-bar {
+  background: var(--accent) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
