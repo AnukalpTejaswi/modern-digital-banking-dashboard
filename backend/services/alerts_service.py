@@ -50,7 +50,7 @@ async def check_low_balance(db: AsyncSession, user_id: int):
     accounts = result.scalars().all()
 
     for acc in accounts:
-        if acc.balance < 1000:  # threshold
+        if acc.balance and acc.balance < 1000:  # threshold
             await create_alert(
                 db,
                 user_id,
@@ -71,7 +71,11 @@ async def check_budget_exceeded(db: AsyncSession, user_id: int):
     budgets = result.scalars().all()
 
     for b in budgets:
-        if b.spent_amount > b.limit_amount:
+        if (
+            b.spent_amount is not None and
+            b.limit_amount is not None and
+            b.spent_amount > b.limit_amount
+        ):
             await create_alert(
                 db,
                 user_id,
