@@ -24,7 +24,7 @@ class TransactionResponse(BaseModel):
     id: int
     account_id: int
     description: Optional[str]
-    category: Optional[str]
+    category: Optional[str] = None
     amount: float
     currency: str
     txn_type: str

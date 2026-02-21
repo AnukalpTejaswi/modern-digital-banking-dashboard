@@ -13,6 +13,7 @@ Enum,
 from datetime import timezone
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from .database import Base
 import enum
 
@@ -119,6 +120,7 @@ class Transaction(Base):
         ForeignKey("categories.id"),
         nullable=False
     )
+    category = relationship("Category")
     amount = Column(Numeric(14, 2), nullable=False)
     currency = Column(String(3), default="INR")
     txn_type = Column(

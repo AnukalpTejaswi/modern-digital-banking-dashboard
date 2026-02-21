@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
 import csv
 import io
+from sqlalchemy.orm import selectinload
 from datetime import datetime, timezone, date # for handling dates
 from decimal import Decimal, InvalidOperation # for precise money handling
 from ..model import Category
@@ -358,8 +359,12 @@ async def list_transactions(
     if not account_ids:
         return []
 
-    query = select(Transaction).where(Transaction.account_id.in_(account_ids))
-
+    query = (
+        select(Transaction)
+        .options(selectinload(Transaction.category))
+        .where(Transaction.account_id.in_(account_ids))
+    )
+    
     if account_id is not None:
         if account_id not in account_ids:
             raise HTTPException(status_code=403, detail="Access denied")
@@ -367,7 +372,23 @@ async def list_transactions(
 
     query = query.order_by(Transaction.txn_date.desc())
     result = await db.execute(query)
-    return result.scalars().all()
+    transactions = result.scalars().all()
+
+    return [
+        {
+            "id": txn.id,
+            "account_id": txn.account_id,
+            "description": txn.description,
+            "category": txn.category.name if txn.category else None,
+            "amount": float(txn.amount),
+            "currency": txn.currency,
+            "txn_type": txn.txn_type.value if hasattr(txn.txn_type, "value") else txn.txn_type,
+            "merchant": txn.merchant,
+            "txn_date": txn.txn_date,
+            "posted_date": txn.posted_date,
+        }
+        for txn in transactions
+]
 
 # =====================================================
 # 4. GET SINGLE TRANSACTION
