@@ -16,7 +16,7 @@ from .routes.rewards import router as rewards_router
 from .routes import insights
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s-%(name)s-%(levelname)s-%(message)s"
 )
 logger = logging.getLogger(__name__)
@@ -94,4 +94,10 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run(
+        "backend.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="debug"
+    )

@@ -68,5 +68,12 @@ async def generate_alerts(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    await generate_alerts_for_user(db, user.id)
-    return {"message": "generated"}
+    try:
+        await generate_alerts_for_user(db, user.id)
+        return {"message": "generated"}
+    except Exception as e:
+        import traceback
+        print("==== FULL TRACEBACK START ====")
+        traceback.print_exc()
+        print("==== FULL TRACEBACK END ====")
+        raise e
