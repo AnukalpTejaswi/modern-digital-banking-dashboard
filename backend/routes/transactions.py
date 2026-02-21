@@ -6,13 +6,12 @@ import csv
 import io
 from datetime import datetime, timezone, date # for handling dates
 from decimal import Decimal, InvalidOperation # for precise money handling
-
+from ..model import Category
 from ..auth.jwt_handler import get_current_user
 from ..database import get_db
 from ..model import Transaction, TransactionType, Account, User, Budget, Alert, AlertType
 from ..routes.transcations_schema import (TransactionResponse, TransactionCreate, )
-from ..services.categorizer import auto_assign_category
-from ..services.category_rules import find_category, add_keyword_to_category, remove_keyword_from_category
+from ..services.db_categorizer import find_category_id
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
 
@@ -29,12 +28,17 @@ async def check_budget_and_create_alert(
     *,
     db: AsyncSession,
     user_id: int,
-    category: str,
+    category_id: int,
     txn_date: datetime,
     txn_amount: Decimal,
 ):
-    if not category:
+    if category_id is None:
         return
+
+    cat_result = await db.execute(
+        select(Category.name).where(Category.id == category_id)
+    )
+    category_name = cat_result.scalar() or "Unknown"
 
     month = txn_date.month
     year = txn_date.year
@@ -43,7 +47,7 @@ async def check_budget_and_create_alert(
     result = await db.execute(
         select(Budget).where(
             Budget.user_id == user_id,
-            Budget.category == category,
+            Budget.category_id == category_id,
             Budget.month == month,
             Budget.year == year,
         )
@@ -58,7 +62,7 @@ async def check_budget_and_create_alert(
         .join(Account, Transaction.account_id == Account.id)
         .where(
             Account.user_id == user_id,
-            Transaction.category == category,
+            Transaction.category_id == category_id,
             Transaction.txn_type == TransactionType.debit,
             func.extract("month", Transaction.txn_date) == month,
             func.extract("year", Transaction.txn_date) == year,
@@ -66,7 +70,6 @@ async def check_budget_and_create_alert(
     )
 
     spent = Decimal(spent_result.scalar() or 0)
-    spent += txn_amount
 
     limit_amount = Decimal(budget.limit_amount)
     usage_pct = (spent / limit_amount) * 100 if limit_amount > 0 else 0
@@ -74,12 +77,12 @@ async def check_budget_and_create_alert(
     # 3. Decide alert
     if usage_pct >= 100:
         message = (
-            f"Budget exceeded for {category} "
+            f"Budget exceeded for {category_name} "
             f"(₹{spent:.2f} / ₹{limit_amount:.2f})"
         )
     elif usage_pct >= 80:
         message = (
-            f"Budget almost reached for {category} "
+            f"Budget almost reached for {category_name} "
             f"(₹{spent:.2f} / ₹{limit_amount:.2f})"
         )
     else:
@@ -91,7 +94,7 @@ async def check_budget_and_create_alert(
             Alert.user_id == user_id,
             Alert.alert_type == AlertType.budget_exceeded,
             Alert.is_read == False,
-            Alert.message.ilike(f"%{category}%"),
+            Alert.message.ilike(f"%{category_name}%"),
         )
     )
     if existing.scalars().first():
@@ -129,12 +132,11 @@ async def create_transaction(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account not found or access denied",
         )
-    if transaction.category:
-        category = transaction.category
-    else:
-        category = auto_assign_category(
-            f"{transaction.merchant} {transaction.description or ''}"
-        )
+    category_id = await find_category_id(
+        db,
+        current_user.id,
+        f"{transaction.merchant} {transaction.description or ''}"
+    )
 
     duplicate_query = select(Transaction).where(
         Transaction.account_id == transaction.account_id,
@@ -155,7 +157,7 @@ async def create_transaction(
     new_transaction = Transaction(
         account_id=transaction.account_id,
         description=transaction.description,
-        category=category,
+        category_id=category_id,
         amount=transaction.amount,
         currency=transaction.currency,
         txn_type=TransactionType(transaction.txn_type),
@@ -177,7 +179,7 @@ async def create_transaction(
         await check_budget_and_create_alert(
             db=db,
             user_id=current_user.id,
-            category=new_transaction.category,
+            category_id=category_id,
             txn_date=new_transaction.txn_date,
             txn_amount=Decimal(str(new_transaction.amount)),
         )
@@ -274,11 +276,11 @@ async def upload_transactions_csv(
                 continue
 
             # Category
-            category = (row.get("category") or "").strip()
-            if not category:
-                category = auto_assign_category(
-                    f"{merchant} {row.get('description', '')}"
-                )
+            category_id = await find_category_id(
+                db,
+                current_user.id,
+                f"{merchant} {row.get('description', '')}"
+            )
 
             # Duplicate check
             duplicate_query = select(Transaction).where(
@@ -296,7 +298,7 @@ async def upload_transactions_csv(
             txn = Transaction(
                 account_id=account_id,
                 description=row.get("description"),
-                category=category,
+                category_id=category_id,
                 amount=amount,
                 currency=row.get("currency", "INR"),
                 txn_type=txn_type,
@@ -317,7 +319,7 @@ async def upload_transactions_csv(
                 await check_budget_and_create_alert(
                     db=db,
                     user_id=current_user.id,
-                    category=category,
+                    category_id=category_id,
                     txn_date=txn_date,
                     txn_amount=amount,
                 )
@@ -448,6 +450,11 @@ async def update_transaction_category(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    new_category_id = payload.get("category_id")
+
+    if not new_category_id:
+        raise HTTPException(400, "category_id required")
+
     # Fetch transaction
     result = await db.execute(
         select(Transaction).where(Transaction.id == transaction_id)
@@ -455,7 +462,7 @@ async def update_transaction_category(
     txn = result.scalars().first()
 
     if not txn:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise HTTPException(404, "Transaction not found")
 
     # Verify ownership
     acc_result = await db.execute(
@@ -465,43 +472,13 @@ async def update_transaction_category(
         )
     )
     if not acc_result.scalars().first():
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(403, "Access denied")
 
-    new_category = payload.get("category")
-    force = payload.get("force", False)
-    if force:
-        await db.execute(
-            update(Transaction)
-            .where(
-                Transaction.account_id == txn.account_id,
-                Transaction.merchant == txn.merchant
-            )
-            .values(category=new_category)
-        )
-    else:
-        txn.category = new_category
+    txn.category_id = new_category_id
 
-    # Validate new category
-    keyword = (txn.merchant or "").lower().strip()
-    existing_category = find_category(keyword)
-
-    if existing_category and existing_category != new_category and not force:
-        return {
-            "warning": True,
-            "message": f"'{keyword}' is commonly categorized as {existing_category}. Do you want to move it to {new_category}?"
-        }
-    # Update category rules
-    if existing_category and existing_category != new_category:
-        remove_keyword_from_category(existing_category, keyword)
-
-    add_keyword_to_category(new_category, keyword)
-
-    # Update transaction
-    txn.category = new_category
     await db.commit()
 
     return {"message": "Category updated successfully"}
-
 
 # ==========================================
 # Delete Transaction

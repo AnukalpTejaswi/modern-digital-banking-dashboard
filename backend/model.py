@@ -114,7 +114,11 @@ class Transaction(Base):
         Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False
     )
     description = Column(String(100), nullable=True)
-    category = Column(String(50), nullable=True)
+    category_id = Column(
+        Integer,
+        ForeignKey("categories.id"),
+        nullable=False
+    )
     amount = Column(Numeric(14, 2), nullable=False)
     currency = Column(String(3), default="INR")
     txn_type = Column(
@@ -137,7 +141,11 @@ class Budget(Base):
     )
     month = Column(Integer, nullable=True)
     year = Column(Integer, nullable=True)
-    category = Column(String(50), nullable=True)
+    category_id = Column(
+        Integer,
+        ForeignKey("categories.id"),
+        nullable=False
+    )
     limit_amount = Column(Numeric(14, 2), nullable=True)
     spent_amount = Column(Numeric(14, 2), default=0.0)
     created_at = Column(DateTime, server_default=func.now())
