@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from decimal import Decimal
 from backend.model import Alert, Account, Budget, Bill, AlertType
 
 
@@ -14,12 +14,12 @@ async def create_alert(
     alert_type: AlertType,
     message: str,
 ):
+    # Remove date filter temporarily to test stability
     result = await db.execute(
         select(Alert).where(
             Alert.user_id == user_id,
             Alert.alert_type == alert_type,
             Alert.message == message,
-            func.date(Alert.created_at) == date.today(),
         )
     )
 
@@ -37,28 +37,26 @@ async def create_alert(
     db.add(new_alert)
     await db.commit()
 
-
 # ---------------------------------------------------
 # Low Balance Alert
 # ---------------------------------------------------
 async def check_low_balance(db: AsyncSession, user_id: int):
-    print("CHECK LOW BALANCE CALLED")
-    return
-'''  result = await db.execute(
+
+    result = await db.execute(
         select(Account).where(Account.user_id == user_id)
     )
 
     accounts = result.scalars().all()
 
     for acc in accounts:
-        if acc.balance is not None and acc.balance < 1000: # threshold
+        if acc.balance is not None and acc.balance < Decimal("1000"):
             await create_alert(
                 db,
                 user_id,
                 AlertType.low_balance,
                 f"Low balance in {acc.bank_name}"
             )
-'''
+
 
 # ---------------------------------------------------
 # Budget Exceeded Alert
@@ -117,8 +115,4 @@ async def check_upcoming_bills(db: AsyncSession, user_id: int):
 # Master Alert Generator
 # ---------------------------------------------------
 async def generate_alerts_for_user(db: AsyncSession, user_id: int):
-    print("STEP 1")
     await check_low_balance(db, user_id)
-    #await check_low_balance(db, user_id)
-    #await check_budget_exceeded(db, user_id)
-    #await check_upcoming_bills(db, user_id)
