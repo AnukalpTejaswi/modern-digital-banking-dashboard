@@ -69,7 +69,7 @@ function DashboardLayout() {
     try {
       await markAlertAsRead(alertId);
       setAlerts((prev) => prev.filter((a) => a.id !== alertId));
-      if (popupAlert?.id === alertId) setPopupAlert(null);
+      setPopupAlert(null);
     } catch {
       showError("Failed to update alert");
     }
@@ -77,13 +77,22 @@ function DashboardLayout() {
 
   // ── Effects ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    generateAlerts().catch(() => {});
-  }, []);
+    const initAlerts = async () => {
+      try {
+        // Generate alerts first
+        await generateAlerts();
 
-  useEffect(() => {
-    getAlerts(true)
-      .then((res) => setAlerts(res.data || []))
-      .catch(() => showError("Failed to load alerts"));
+        // Then fetch unread alerts
+        const res = await getAlerts(true);
+        const alertList = res.data || [];
+        setAlerts(alertList);
+
+      } catch {
+        showError("Failed to initialize alerts");
+      }
+    };
+
+    initAlerts();
   }, []);
 
   useEffect(() => {
@@ -405,7 +414,7 @@ function DashboardLayout() {
 
       {/* Bill popup */}
       {popupAlert && (
-        <AlertPopup alert={popupAlert} onClose={() => setPopupAlert(null)} />
+        <AlertPopup alert={popupAlert} onClose={() => handleCloseAlert(popupAlert.id)} />
       )}
     </div>
   );
