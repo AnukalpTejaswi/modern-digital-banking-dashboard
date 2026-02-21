@@ -35,7 +35,7 @@ async def create_alert(
     )
 
     db.add(new_alert)
-    await db.commit()
+    #await db.commit()
 
 # ---------------------------------------------------
 # Low Balance Alert
