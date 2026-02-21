@@ -1,6 +1,6 @@
 from sqlalchemy import select, func, extract, case
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.model import Transaction, Account, Budget
+from backend.model import Transaction, Account, Budget, Category
 from datetime import datetime
 
 # ---------------------------------------
@@ -129,22 +129,23 @@ async def get_category_summary(db: AsyncSession, user_id: int, month: int, year:
 
     result = await db.execute(
         select(
-            Transaction.category,
+            Category.name,
             func.sum(Transaction.amount).label("total_spent")
         )
-        .join(Account)
+        .join(Account, Transaction.account_id == Account.id)
+        .join(Category, Transaction.category_id == Category.id)
         .where(Account.user_id == user_id)
         .where(Transaction.txn_type == "debit")
         .where(extract("month", Transaction.txn_date) == month)
         .where(extract("year", Transaction.txn_date) == year)
-        .group_by(Transaction.category)
+        .group_by(Category.name)
     )
 
     rows = result.all()
 
     return [
         {
-            "category": r.category,
+            "category": r.name,
             "amount": float(r.total_spent)
         }
         for r in rows
@@ -204,18 +205,24 @@ async def get_budget_vs_spending(
     data = []
 
     for budget in budgets:
+
         usage = await calculate_budget_usage(
             db=db,
             budget=budget,
             user_id=user_id,
         )
 
+        # Fetch category name
+        cat_result = await db.execute(
+            select(Category.name).where(Category.id == budget.category_id)
+        )
+        category_name = cat_result.scalar() or "Unknown"
+
         data.append({
-            "category": budget.category or "Overall",
+            "category": category_name,
             "Budget": float(budget.limit_amount),
             "Spent": float(usage["spent_amount"]),
         })
-
     return data
 
 
