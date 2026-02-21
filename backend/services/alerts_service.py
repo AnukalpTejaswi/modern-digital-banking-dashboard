@@ -42,8 +42,9 @@ async def create_alert(
 # Low Balance Alert
 # ---------------------------------------------------
 async def check_low_balance(db: AsyncSession, user_id: int):
-
-    result = await db.execute(
+    print("CHECK LOW BALANCE CALLED")
+    return
+'''  result = await db.execute(
         select(Account).where(Account.user_id == user_id)
     )
 
@@ -57,7 +58,7 @@ async def check_low_balance(db: AsyncSession, user_id: int):
                 AlertType.low_balance,
                 f"Low balance in {acc.bank_name}"
             )
-
+'''
 
 # ---------------------------------------------------
 # Budget Exceeded Alert
