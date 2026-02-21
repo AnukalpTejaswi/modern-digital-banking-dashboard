@@ -54,7 +54,7 @@ async def check_low_balance(db: AsyncSession, user_id: int):
             await create_alert(
                 db,
                 user_id,
-                AlertType.LOW_BALANCE,
+                AlertType.low_balance,
                 f"Low balance in {acc.bank_name}"
             )
 
@@ -79,7 +79,7 @@ async def check_budget_exceeded(db: AsyncSession, user_id: int):
             await create_alert(
                 db,
                 user_id,
-                AlertType.BUDGET_EXCEEDED,
+                AlertType.budget_exceeded,
                 f"Budget exceeded for {b.category}"
             )
 
@@ -107,7 +107,7 @@ async def check_upcoming_bills(db: AsyncSession, user_id: int):
         await create_alert(
             db,
             user_id,
-            AlertType.BILL_DUE,
+            AlertType.bill_due,
             f"{bill.biller_name} due on {bill.due_date}"
         )
 
