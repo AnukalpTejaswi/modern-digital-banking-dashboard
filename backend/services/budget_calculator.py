@@ -30,8 +30,8 @@ async def calculate_budget_usage(
         Account.user_id == user_id,
     ]
     # If category budget → filter by category
-    if budget.category is not None:
-        conditions.append(Transaction.category == budget.category)
+    if budget.category_id is not None:
+       conditions.append(Transaction.category_id == budget.category_id)
 
     query = (
         select(func.sum(Transaction.amount))
@@ -45,7 +45,7 @@ async def calculate_budget_usage(
     spent = result.scalar() or 0
 
     spent = float(spent)
-    limit_amount = float(budget.limit_amount)
+    limit_amount = float(budget.limit_amount or 0)
 
     remaining = limit_amount - spent
     is_over_budget = spent > limit_amount
