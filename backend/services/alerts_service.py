@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
-from backend.model import Alert, Account, Budget, Bill, AlertType
+from backend.model import Alert, Account, Budget, Bill, AlertType, Category
 
 
 async def create_alert(
@@ -63,11 +63,17 @@ async def check_budget_exceeded(db: AsyncSession, user_id: int):
             b.limit_amount is not None and
             b.spent_amount > b.limit_amount
         ):
+            # Fetch category name
+            cat_result = await db.execute(
+                select(Category.name).where(Category.id == b.category_id)
+            )
+            category_name = cat_result.scalar() or "Unknown"
+
             await create_alert(
                 db,
                 user_id,
                 AlertType.budget_exceeded,
-                f"Budget exceeded for {b.category}"
+                f"Budget exceeded for {category_name}"
             )
 
 
