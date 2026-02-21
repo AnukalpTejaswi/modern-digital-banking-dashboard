@@ -50,9 +50,8 @@ class BillStatus(enum.Enum):
     overdue = "overdue"
 
 class AlertType(enum.Enum):
-    """Alert notification types"""
+    low_balance = "low_balance"
     bill_due = "bill_due"
-    budget_warning = "budget_warning"
     budget_exceeded = "budget_exceeded"
 
 
