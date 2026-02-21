@@ -143,7 +143,6 @@ class Budget(Base):
     spent_amount = Column(Numeric(14, 2), default=0.0)
     created_at = Column(DateTime, server_default=func.now())
 
-last_reminded_at = Column(Date, nullable=True)
 
 class Bill(Base):
     __tablename__ = "bills"

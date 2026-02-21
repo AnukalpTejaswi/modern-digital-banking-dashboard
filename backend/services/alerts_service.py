@@ -1,20 +1,16 @@
 from datetime import date, timedelta
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
 from backend.model import Alert, Account, Budget, Bill, AlertType
 
 
-# ---------------------------------------------------
-# Prevent duplicate alerts (same day, same message)
-# ---------------------------------------------------
 async def create_alert(
     db: AsyncSession,
     user_id: int,
     alert_type: AlertType,
     message: str,
 ):
-    # Remove date filter temporarily to test stability
     result = await db.execute(
         select(Alert).where(
             Alert.user_id == user_id,
@@ -35,13 +31,9 @@ async def create_alert(
     )
 
     db.add(new_alert)
-    #await db.commit()
 
-# ---------------------------------------------------
-# Low Balance Alert
-# ---------------------------------------------------
+
 async def check_low_balance(db: AsyncSession, user_id: int):
-
     result = await db.execute(
         select(Account).where(Account.user_id == user_id)
     )
@@ -58,11 +50,7 @@ async def check_low_balance(db: AsyncSession, user_id: int):
             )
 
 
-# ---------------------------------------------------
-# Budget Exceeded Alert
-# ---------------------------------------------------
 async def check_budget_exceeded(db: AsyncSession, user_id: int):
-
     result = await db.execute(
         select(Budget).where(Budget.user_id == user_id)
     )
@@ -83,11 +71,7 @@ async def check_budget_exceeded(db: AsyncSession, user_id: int):
             )
 
 
-# ---------------------------------------------------
-# Upcoming Bill Alert
-# ---------------------------------------------------
 async def check_upcoming_bills(db: AsyncSession, user_id: int):
-
     today = date.today()
     upcoming_limit = today + timedelta(days=3)
 
@@ -111,8 +95,9 @@ async def check_upcoming_bills(db: AsyncSession, user_id: int):
         )
 
 
-# ---------------------------------------------------
-# Master Alert Generator
-# ---------------------------------------------------
 async def generate_alerts_for_user(db: AsyncSession, user_id: int):
     await check_low_balance(db, user_id)
+    await check_budget_exceeded(db, user_id)
+    await check_upcoming_bills(db, user_id)
+
+    await db.commit()   # ← SINGLE COMMIT HERE
