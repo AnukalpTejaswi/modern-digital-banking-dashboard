@@ -7,7 +7,7 @@ from datetime import date
 from ..services.budget_calculator import calculate_budget_usage
 from ..auth.jwt_handler import get_current_user
 from ..database import get_db
-from ..model import Budget, User
+from ..model import Budget, User, Category
 from .budgets_schema import BudgetCreate, BudgetResponse
 
 router = APIRouter(
@@ -44,7 +44,7 @@ async def create_budget(
         Budget.user_id == current_user.id,
         Budget.month == payload.month,
         Budget.year == payload.year,
-        Budget.category == payload.category,
+        Budget.category_id == payload.category_id,
     )
 
     result = await db.execute(query)
@@ -61,7 +61,7 @@ async def create_budget(
         user_id=current_user.id,
         month=payload.month,
         year=payload.year,
-        category=payload.category,
+        category_id=payload.category_id,
         limit_amount=payload.limit_amount,
     )
 
@@ -96,19 +96,23 @@ async def list_budgets(
     db: AsyncSession = Depends(get_db),
 ):
     # Fetch budgets for user + selected month/year
-    query = select(Budget).where(
-        Budget.user_id == current_user.id,
-        Budget.month == month,
-        Budget.year == year,
+    query = (
+        select(Budget, Category.name)
+        .join(Category, Budget.category_id == Category.id)
+        .where(
+            Budget.user_id == current_user.id,
+            Budget.month == month,
+            Budget.year == year,
+        )
     )
 
     result = await db.execute(query)
-    budgets = result.scalars().all()
+    budgets = result.all()
 
     responses = []
 
     # Calculate usage for each budget
-    for budget in budgets:
+    for budget, category_name in budgets:
         usage = await calculate_budget_usage(
             db=db,
             budget=budget,
@@ -120,7 +124,7 @@ async def list_budgets(
                 id=budget.id,
                 month=budget.month,
                 year=budget.year,
-                category=budget.category,
+                category=category_name,
                 limit_amount=float(budget.limit_amount),
                 spent_amount=usage["spent_amount"],
                 remaining_amount=usage["remaining_amount"],
@@ -162,9 +166,8 @@ async def update_budget(
                 detail="Invalid limit amount"
             )
 
-    if "category" in payload:
-        # Category can be None (overall budget)
-        budget.category = payload["category"]
+    if "category_id" in payload:
+        budget.category_id = payload["category_id"]
 
     await db.commit()
 

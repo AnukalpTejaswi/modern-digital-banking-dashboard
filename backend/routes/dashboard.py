@@ -7,7 +7,7 @@ from datetime import datetime
 
 from ..auth.jwt_handler import get_current_user
 from ..database import get_db
-from ..model import User, Account, Transaction, TransactionType
+from ..model import User, Account, Transaction, TransactionType, Category
 from ..routes.dashboard_schema import (
     DashboardOverviewResponse,
     DashboardUserInfo,
@@ -72,27 +72,29 @@ async def get_dashboard_overview(
 
     if account_ids:
         transactions_query = (
-            select(Transaction)
+            select(Transaction, Category.name)
+            .join(Category, Transaction.category_id == Category.id)
             .where(Transaction.account_id.in_(account_ids))
             .order_by(Transaction.txn_date.desc())
             .limit(10)
         )
+
         transactions_result = await db.execute(transactions_query)
-        transactions = transactions_result.scalars().all()
+        transactions = transactions_result.all()
 
         transaction_responses = [
             {
                 "id": txn.id,
                 "account_id": txn.account_id,
                 "description": txn.description,
-                "category": txn.category,
+                "category": category_name,
                 "amount": float(txn.amount),
                 "currency": txn.currency,
                 "txn_type": txn.txn_type.value,
                 "merchant": txn.merchant,
                 "txn_date": txn.txn_date,
             }
-            for txn in transactions
+            for txn, category_name in transactions
         ]
     else:
         transaction_responses = []
