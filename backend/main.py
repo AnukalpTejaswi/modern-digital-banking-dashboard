@@ -47,13 +47,14 @@ app = FastAPI(
     lifespan=Lifespan,
 )
 
-#origins = [
-#    "https://modern-digital-banking-dashboard-three.vercel.app",
-#]
+origins = [
+    "http://localhost:3000",
+    "https://modern-digital-banking-dashboard-three.vercel.app",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TEMPORARY FIX
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
