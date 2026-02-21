@@ -68,5 +68,17 @@ async def generate_alerts(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    await generate_alerts_for_user(db, user.id)
-    return {"message": "Alerts generated successfully", "generated_at": datetime.utcnow()}
+    try:
+        print("Generating alerts for user:", user.id)
+
+        await generate_alerts_for_user(db, user.id)
+
+        print("Alerts generated successfully")
+
+        return {
+            "message": "Alerts generated successfully"
+        }
+
+    except Exception as e:
+        print("ERROR IN GENERATE ALERTS:", str(e))
+        raise e

@@ -50,7 +50,7 @@ async def check_low_balance(db: AsyncSession, user_id: int):
     accounts = result.scalars().all()
 
     for acc in accounts:
-        if acc.balance and acc.balance < 1000:  # threshold
+        if acc.balance is not None and acc.balance < 1000: # threshold
             await create_alert(
                 db,
                 user_id,
@@ -95,6 +95,7 @@ async def check_upcoming_bills(db: AsyncSession, user_id: int):
     result = await db.execute(
         select(Bill).where(
             Bill.user_id == user_id,
+            Bill.due_date != None,
             Bill.due_date >= today,
             Bill.due_date <= upcoming_limit
         )
