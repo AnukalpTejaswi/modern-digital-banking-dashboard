@@ -116,7 +116,8 @@ async def check_upcoming_bills(db: AsyncSession, user_id: int):
 # Master Alert Generator
 # ---------------------------------------------------
 async def generate_alerts_for_user(db: AsyncSession, user_id: int):
-
+    print("STEP 1")
     await check_low_balance(db, user_id)
-    await check_budget_exceeded(db, user_id)
-    await check_upcoming_bills(db, user_id)
+    #await check_low_balance(db, user_id)
+    #await check_budget_exceeded(db, user_id)
+    #await check_upcoming_bills(db, user_id)
