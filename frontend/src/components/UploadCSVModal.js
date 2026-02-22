@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { uploadTransactionsCSV } from '../api';
 import { showSuccess, showError } from '../utils/toast';
 
@@ -29,8 +30,8 @@ function UploadCSVModal({ isOpen, onClose, accountId, onUploadSuccess }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <h2 className="text-xl font-semibold mb-6">
           Upload Transactions CSV
@@ -61,7 +62,8 @@ function UploadCSVModal({ isOpen, onClose, accountId, onUploadSuccess }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
