@@ -53,7 +53,8 @@ class BillStatus(enum.Enum):
 class AlertType(enum.Enum):
     low_balance = "low_balance"
     bill_due = "bill_due"
-    budget_exceeded = "budget_exceeded"
+    budget_warning = "budget_warning"     # 70%
+    budget_exceeded = "budget_exceeded"   # 100%
 
 
 # ============================================

@@ -70,26 +70,38 @@ async def check_budget_and_create_alert(
         )
     )
 
-    spent = Decimal(spent_result.scalar() or 0)
+    spent = Decimal(spent_result.scalar() or 0) + txn_amount
 
     limit_amount = Decimal(budget.limit_amount)
     usage_pct = (spent / limit_amount) * 100 if limit_amount > 0 else 0
 
-    # 3. Decide alert
+    # 3. Decide alert type
     if usage_pct >= 100:
+        alert_type = AlertType.budget_exceeded
         message = (
             f"Budget exceeded for {category_name} "
             f"(₹{spent:.2f} / ₹{limit_amount:.2f})"
         )
     elif usage_pct >= 70:
+        alert_type = AlertType.budget_warning
         message = (
-            f"Budget almost reached for {category_name} "
+            f"Budget threshold reached for {category_name} "
             f"(₹{spent:.2f} / ₹{limit_amount:.2f})"
         )
     else:
         return
 
-    # 4. Prevent duplicate unread alert for same category
+    # 4. Create alert
+    db.add(
+        Alert(
+            user_id=user_id,
+            alert_type=alert_type,
+            message=message,
+            is_read=False,
+        )
+    )
+
+    # 5. Prevent duplicate unread alert for same category
     existing = await db.execute(
         select(Alert).where(
             Alert.user_id == user_id,
@@ -101,15 +113,7 @@ async def check_budget_and_create_alert(
     if existing.scalars().first():
         return
 
-    # 5. Create alert (NO commit here)
-    db.add(
-        Alert(
-            user_id=user_id,
-            alert_type=AlertType.budget_exceeded,
-            message=message,
-            is_read=False,
-        )
-    )
+    
 
 # =====================================================
 # 1. CREATE TRANSACTION
