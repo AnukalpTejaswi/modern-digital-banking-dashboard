@@ -7,11 +7,9 @@ function UploadCSVModal({ isOpen, onClose, accountId, onUploadSuccess }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  if (!isOpen) return null;
-  
   useEffect(() => {
     if (isOpen) {
-      window.scrollTo({ top: 0, behavior: "instant" });
+      window.scrollTo({ top: 0 });
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -21,6 +19,8 @@ function UploadCSVModal({ isOpen, onClose, accountId, onUploadSuccess }) {
       document.body.style.overflow = "auto";
     };
   }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handleUpload = async () => {
     if (!file) {
