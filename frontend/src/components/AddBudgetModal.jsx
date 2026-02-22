@@ -102,91 +102,76 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50" style={{backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.5)'}}>
-      <div className="bg-white rounded-xl p-6 w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+
+      {/* Background Blur */}
+      <div
+        className="absolute inset-0 backdrop-blur-sm bg-white/30"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
         <h2 className="text-xl font-bold mb-4">
           {budget ? "Edit Budget" : "Add Budget"}
         </h2>
 
-        {/* Month / Year selectors (used only for creation) */}
+        {/* Month / Year */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          {/* Month */}
+
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Month
-            </label>
+            <label className="block text-sm font-medium mb-1">Month</label>
             <select
               value={formData.month}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  month: Number(e.target.value),
-                })
+                setFormData({ ...formData, month: Number(e.target.value) })
               }
-              disabled={!!budget} // prevent editing month
+              disabled={!!budget}
               className="w-full border rounded px-3 py-2"
             >
-              {MONTHS.map((m, i) => {
-                // Disable previous months for current year
-                const isPast =
-                  formData.year === now.getFullYear() && i + 1 < now.getMonth() + 1;
-                return (
-                  <option key={m} value={i + 1} disabled={!budget && isPast}>
-                    {m}
-                  </option>
-                );
-              })}
+              {MONTHS.map((m, i) => (
+                <option key={m} value={i + 1}>
+                  {m}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Year */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Year
-            </label>
+            <label className="block text-sm font-medium mb-1">Year</label>
             <select
               value={formData.year}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  year: Number(e.target.value),
-                })
+                setFormData({ ...formData, year: Number(e.target.value) })
               }
-              disabled={!!budget} // prevent editing year
+              disabled={!!budget}
               className="w-full border rounded px-3 py-2"
             >
               {[now.getFullYear(), now.getFullYear() + 1, now.getFullYear() + 2].map(
                 (y) => (
-                  <option key={y} value={y} disabled={!budget && y < now.getFullYear()}>
-                    {y}
-                  </option>
+                  <option key={y} value={y}>{y}</option>
                 )
               )}
             </select>
           </div>
+
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Category selector */}
+
           <select
             className="w-full border p-2 rounded"
             value={formData.category}
             onChange={(e) =>
-              setFormData({
-                ...formData,
-                category: e.target.value,
-              })
+              setFormData({ ...formData, category: e.target.value })
             }
           >
             <option value="">Select category</option>
             {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
+              <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
 
-          {/* Monthly limit */}
           <input
             type="number"
             required
@@ -194,14 +179,10 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
             className="w-full border p-2 rounded"
             value={formData.limit_amount}
             onChange={(e) =>
-              setFormData({
-                ...formData,
-                limit_amount: e.target.value,
-              })
+              setFormData({ ...formData, limit_amount: e.target.value })
             }
           />
 
-          {/* Actions */}
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -218,7 +199,9 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
               Save
             </button>
           </div>
+
         </form>
+
       </div>
     </div>
   );

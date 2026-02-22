@@ -63,11 +63,23 @@ function AddTransactionModal({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50" style={{backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.5)'}}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+
+      {/* Background Blur Layer */}
+      <div
+        className="absolute inset-0 backdrop-blur-sm bg-white/30"
+        onClick={() => {
+          setFormData(INITIAL_FORM_STATE);
+          onClose();
+        }}
+      ></div>
+
+      {/* Modal Content */}
+      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Add Transaction</h2>
 
         <form onSubmit={handleSubmit} className="space-y-3">
+
           {/* Amount */}
           <input
             type="number"
@@ -94,7 +106,6 @@ function AddTransactionModal({
             <option value="credit">Credit (Income)</option>
           </select>
 
-
           {/* Category */}
           <select
             className="w-full border p-2 rounded"
@@ -119,7 +130,9 @@ function AddTransactionModal({
           <select
             className="w-full border p-2 rounded"
             value={formData.currency}
-            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, currency: e.target.value })
+            }
           >
             <option value="INR">INR (₹)</option>
             <option value="USD">USD ($)</option>
@@ -148,17 +161,17 @@ function AddTransactionModal({
             type="text"
             placeholder="Merchant"
             className="w-full border p-2 rounded"
-            value={formData.merchant}
             required
+            value={formData.merchant}
             onChange={(e) =>
-                setFormData({ ...formData, merchant: e.target.value })
+              setFormData({ ...formData, merchant: e.target.value })
             }
-            />
-
-
+          />
 
           {/* Transaction Date */}
-          <label className="block text-sm font-medium mb-1">Transaction Date</label>
+          <label className="block text-sm font-medium mb-1">
+            Transaction Date
+          </label>
           <input
             type="date"
             required
@@ -173,16 +186,15 @@ function AddTransactionModal({
           {/* Buttons */}
           <div className="flex justify-end gap-2 pt-4">
             <button
-            type="button"
-            onClick={() => {
+              type="button"
+              onClick={() => {
                 setFormData(INITIAL_FORM_STATE);
                 onClose();
-            }}
-            className="px-4 py-2 text-gray-600"
+              }}
+              className="px-4 py-2 text-gray-600"
             >
-            Cancel
+              Cancel
             </button>
-
 
             <button
               type="submit"
@@ -191,8 +203,10 @@ function AddTransactionModal({
               Save
             </button>
           </div>
+
         </form>
       </div>
+
     </div>
   );
 }
