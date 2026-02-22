@@ -4,19 +4,18 @@ from ..model import Category, CategoryKeyword
 
 
 async def find_category_id(
-    db: AsyncSession,
+    db,
     text: str
 ):
     text = text.lower()
 
-    # Match using LIKE instead of exact split matching
     result = await db.execute(
         select(Category.id)
         .join(CategoryKeyword,
               Category.id == CategoryKeyword.category_id)
         .where(
-            func.lower(text).like(
-                func.concat('%', CategoryKeyword.keyword, '%')
+            func.lower(CategoryKeyword.keyword).in_(
+                text.split()
             )
         )
     )
