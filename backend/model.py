@@ -200,7 +200,11 @@ class Alert(Base):
     alert_type = Column(Enum(AlertType, name="type_enum"))
     message = Column(Text)
     is_read = Column(Boolean, default=False)
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
 
 
 class AdminLog(Base):

@@ -1,10 +1,10 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
 from backend.model import Alert, Account, Budget, Bill, AlertType, Category
 from backend.services.budget_calculator import calculate_budget_usage
-
+from sqlalchemy.exc import IntegrityError
 
 async def create_alert(
     db: AsyncSession,
@@ -16,14 +16,14 @@ async def create_alert(
         select(Alert).where(
             Alert.user_id == user_id,
             Alert.alert_type == alert_type,
-            Alert.message == message,
         )
     )
 
-    existing = result.scalar_one_or_none()
+    existing = result.scalars().first()
 
     if existing:
-        return
+        existing.message = message
+        return existing
 
     new_alert = Alert(
         user_id=user_id,
@@ -32,6 +32,7 @@ async def create_alert(
     )
 
     db.add(new_alert)
+    return new_alert
 
 
 async def check_low_balance(db: AsyncSession, user_id: int):
