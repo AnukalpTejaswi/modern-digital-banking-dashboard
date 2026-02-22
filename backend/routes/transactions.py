@@ -133,10 +133,31 @@ async def create_transaction(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account not found or access denied",
         )
-    category_id = await find_category_id(
-        db,
-        f"{transaction.merchant} {transaction.description or ''}"
-    )
+    #  If user selected category → use it
+    if transaction.category:
+        cat_result = await db.execute(
+            select(Category).where(Category.name == transaction.category)
+        )
+        category = cat_result.scalars().first()
+
+        if not category:
+            raise HTTPException(status_code=400, detail="Invalid category")
+
+        category_id = category.id
+
+    #  Otherwise use keyword detection
+    else:
+        category_id = await find_category_id(
+            db,
+            f"{transaction.merchant} {transaction.description or ''}"
+        )
+
+        if not category_id:
+            # fallback to "Others"
+            fallback = await db.execute(
+                select(Category).where(Category.name == "Others")
+            )
+            category_id = fallback.scalar()
 
     duplicate_query = select(Transaction).where(
         Transaction.account_id == transaction.account_id,
