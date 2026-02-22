@@ -81,7 +81,7 @@ async def check_budget_and_create_alert(
             f"Budget exceeded for {category_name} "
             f"(₹{spent:.2f} / ₹{limit_amount:.2f})"
         )
-    elif usage_pct >= 80:
+    elif usage_pct >= 70:
         message = (
             f"Budget almost reached for {category_name} "
             f"(₹{spent:.2f} / ₹{limit_amount:.2f})"

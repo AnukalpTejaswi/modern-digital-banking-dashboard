@@ -91,6 +91,23 @@ function DashboardLayout() {
         showError("Failed to initialize alerts");
       }
     };
+  //  Refresh alerts when a transaction creates one
+  useEffect(() => {
+    const refreshAlerts = async () => {
+      try {
+        const res = await getAlerts(true);
+        setAlerts(res.data || []);
+      } catch {
+        // silent fail
+      }
+    };
+
+    window.addEventListener("alert-updated", refreshAlerts);
+
+    return () => {
+      window.removeEventListener("alert-updated", refreshAlerts);
+    };
+  }, []);
 
     initAlerts();
   }, []);

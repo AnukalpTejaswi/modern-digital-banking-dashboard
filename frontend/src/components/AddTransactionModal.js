@@ -54,14 +54,15 @@ function AddTransactionModal({
       });
 
       showSuccess('Transaction added successfully');
-
-      showSuccess('Transaction added successfully');
       setFormData(INITIAL_FORM_STATE);
 
-      //Trigger global refresh for budgets
+      // Refresh budgets
       window.dispatchEvent(new Event("transaction-added"));
 
-      onTransactionAdded();  
+      // Refresh alerts
+      window.dispatchEvent(new Event("alert-updated"));
+
+      onTransactionAdded();
       onClose();         
     } catch (error) {
       showError('Failed to add transaction');
