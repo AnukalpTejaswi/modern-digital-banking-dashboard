@@ -222,6 +222,9 @@ async def get_budget_vs_spending(
             "category": category_name,
             "Budget": float(budget.limit_amount),
             "Spent": float(usage["spent_amount"]),
+            "Remaining": float(usage["remaining_amount"]),
+            "UsagePercentage": float(usage["usage_percentage"]),
+            "Status": usage["status"],
         })
     return data
 
