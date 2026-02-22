@@ -76,21 +76,19 @@ function DashboardLayout() {
   };
 
   // ── Effects ─────────────────────────────────────────────────────────────
-  useEffect(() => {
+    useEffect(() => {
     const initAlerts = async () => {
       try {
-        // Generate alerts first
         await generateAlerts();
-
-        // Then fetch unread alerts
         const res = await getAlerts(true);
-        const alertList = res.data || [];
-        setAlerts(alertList);
-
+        setAlerts(res.data || []);
       } catch {
         showError("Failed to initialize alerts");
       }
     };
+
+    initAlerts();
+  }, []);
   //  Refresh alerts when a transaction creates one
   useEffect(() => {
     const refreshAlerts = async () => {
@@ -108,9 +106,6 @@ function DashboardLayout() {
     return () => {
       window.removeEventListener("alert-updated", refreshAlerts);
     };
-  }, []);
-
-    initAlerts();
   }, []);
 
   useEffect(() => {
