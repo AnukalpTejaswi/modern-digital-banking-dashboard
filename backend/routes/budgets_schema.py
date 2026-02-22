@@ -23,7 +23,8 @@ class BudgetResponse(BaseModel):
     limit_amount: float
     spent_amount: float
     remaining_amount: float
-    is_over_budget: bool
+    usage_percentage: float
+    status: str
     usage_percentage: float
     status: str
 

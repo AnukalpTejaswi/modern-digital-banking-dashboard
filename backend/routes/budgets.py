@@ -128,7 +128,8 @@ async def list_budgets(
                 limit_amount=float(budget.limit_amount),
                 spent_amount=usage["spent_amount"],
                 remaining_amount=usage["remaining_amount"],
-                is_over_budget=usage["is_over_budget"],
+                usage_percentage=usage["usage_percentage"],
+                status=usage["status"],
             )
         )
 
