@@ -462,6 +462,7 @@ async def transaction_summary(
 # =====================================================
 # 6. UPDATE TRANSACTION CATEGORY
 # =====================================================
+
 @router.put("/{transaction_id}", status_code=200)
 async def update_transaction_category(
     transaction_id: int,
@@ -469,10 +470,19 @@ async def update_transaction_category(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    new_category_id = payload.get("category_id")
+    new_category_name = payload.get("category")
 
-    if not new_category_id:
-        raise HTTPException(400, "category_id required")
+    if not new_category_name:
+        raise HTTPException(400, "category required")
+
+    # Get category_id from name
+    cat_result = await db.execute(
+        select(Category).where(Category.name == new_category_name)
+    )
+    category = cat_result.scalars().first()
+
+    if not category:
+        raise HTTPException(400, "Invalid category")
 
     # Fetch transaction
     result = await db.execute(
@@ -493,12 +503,11 @@ async def update_transaction_category(
     if not acc_result.scalars().first():
         raise HTTPException(403, "Access denied")
 
-    txn.category_id = new_category_id
+    txn.category_id = category.id
 
     await db.commit()
 
     return {"message": "Category updated successfully"}
-
 # ==========================================
 # Delete Transaction
 # ==========================================

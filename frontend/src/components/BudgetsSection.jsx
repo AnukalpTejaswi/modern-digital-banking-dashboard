@@ -52,7 +52,18 @@ function BudgetsSection() {
   useEffect(() => {
     loadBudgets();
   }, [loadBudgets]);
+  
+  useEffect(() => {
+    const handleTransactionAdded = () => {
+      loadBudgets();
+    };
 
+    window.addEventListener("transaction-added", handleTransactionAdded);
+
+    return () => {
+      window.removeEventListener("transaction-added", handleTransactionAdded);
+    };
+  }, [loadBudgets]);
   const handleDelete = async (id) => {
     try {
       await deleteBudget(id);
