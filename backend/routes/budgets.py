@@ -28,6 +28,8 @@ async def create_budget(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    from datetime import date
+
     # Prevent creating budgets for past months
     today = date.today()
     if (
@@ -39,12 +41,21 @@ async def create_budget(
             detail="Cannot create budget for a previous month"
         )
 
-    # Check for duplicate budget (same user, month, year, category)
+    # 🔹 Convert category name → category_id
+    cat_result = await db.execute(
+        select(Category).where(Category.name == payload.category)
+    )
+    category = cat_result.scalars().first()
+
+    if not category:
+        raise HTTPException(status_code=400, detail="Invalid category")
+
+    # 🔹 Check duplicate
     query = select(Budget).where(
         Budget.user_id == current_user.id,
         Budget.month == payload.month,
         Budget.year == payload.year,
-        Budget.category_id == payload.category_id,
+        Budget.category_id == category.id,
     )
 
     result = await db.execute(query)
@@ -56,12 +67,12 @@ async def create_budget(
             detail="Budget already exists for this category and month"
         )
 
-    # Create new budget
+    # 🔹 Create new budget
     new_budget = Budget(
         user_id=current_user.id,
         month=payload.month,
         year=payload.year,
-        category_id=payload.category_id,
+        category_id=category.id,
         limit_amount=payload.limit_amount,
     )
 
@@ -69,18 +80,24 @@ async def create_budget(
     await db.commit()
     await db.refresh(new_budget)
 
-    # Initial response (no spending yet)
+    # 🔹 Calculate usage
+    usage = await calculate_budget_usage(
+        db=db,
+        budget=new_budget,
+        user_id=current_user.id,
+    )
+
     return BudgetResponse(
         id=new_budget.id,
         month=new_budget.month,
         year=new_budget.year,
-        category=new_budget.category,
+        category=payload.category,
         limit_amount=float(new_budget.limit_amount),
-        spent_amount=0.0,
-        remaining_amount=float(new_budget.limit_amount),
-        is_over_budget=False,
+        spent_amount=usage["spent_amount"],
+        remaining_amount=usage["remaining_amount"],
+        usage_percentage=usage["usage_percentage"],
+        status=usage["status"],
     )
-
 # ============================
 # List budgets for a month/year
 # ============================
@@ -167,8 +184,14 @@ async def update_budget(
                 detail="Invalid limit amount"
             )
 
-    if "category_id" in payload:
-        budget.category_id = payload["category_id"]
+    if "category" in payload:
+        cat_result = await db.execute(
+            select(Category).where(Category.name == payload["category"])
+        )
+        category = cat_result.scalars().first()
+        if not category:
+            raise HTTPException(status_code=400, detail="Invalid category")
+        budget.category_id = category.id
 
     await db.commit()
 
