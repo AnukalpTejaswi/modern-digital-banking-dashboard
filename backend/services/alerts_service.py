@@ -66,8 +66,8 @@ async def check_budget_exceeded(db: AsyncSession, user_id: int):
             user_id=user_id,
         )
 
-        if usage["usage_percentage"] >= 70:   # ← YOUR THRESHOLD
-            # Fetch category name
+        # ONLY 100%+ should go to Alerts page
+        if usage["usage_percentage"] >= 100:
             cat_result = await db.execute(
                 select(Category.name).where(Category.id == b.category_id)
             )
@@ -77,8 +77,7 @@ async def check_budget_exceeded(db: AsyncSession, user_id: int):
                 db,
                 user_id,
                 AlertType.budget_exceeded,
-                f"Budget threshold reached for {category_name} "
-                f"({usage['usage_percentage']}%)"
+                f"Budget exceeded for {category_name}"
             )
 
 async def check_upcoming_bills(db: AsyncSession, user_id: int):
