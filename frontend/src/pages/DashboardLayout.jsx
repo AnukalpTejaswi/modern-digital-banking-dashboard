@@ -144,7 +144,7 @@ function DashboardLayout() {
     .slice(0, 2);
 
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: "var(--bg-base)" }}>
+    <div className="h-screen flex" style={{ background: "var(--bg-base)" }}>
       {/* ══════════════════════════════════════════════
           SIDEBAR
       ══════════════════════════════════════════════ */}
@@ -318,7 +318,7 @@ function DashboardLayout() {
       {/* ══════════════════════════════════════════════
           MAIN COLUMN
       ══════════════════════════════════════════════ */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
         {/* ── HEADER ──────────────────────────────── */}
         <header
           className="flex items-center justify-between px-8 py-4 sticky top-0 z-30"

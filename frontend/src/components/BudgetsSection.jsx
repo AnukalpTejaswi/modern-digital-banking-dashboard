@@ -123,8 +123,8 @@ function BudgetsSection() {
 
             {/* Donut chart */}
             <div className="relative flex-shrink-0">
-              <div className="w-48 h-48">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-48 h-48 min-w-[192px] min-h-[192px]">
+                <ResponsiveContainer width="100%" height={192}>
                   <PieChart>
                     <Pie
                       data={pieData}
