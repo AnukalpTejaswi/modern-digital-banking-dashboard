@@ -48,10 +48,26 @@ async def calculate_budget_usage(
     limit_amount = float(budget.limit_amount or 0)
 
     remaining = limit_amount - spent
-    is_over_budget = spent > limit_amount
+
+    # Avoid division by zero
+    if limit_amount > 0:
+        usage_percentage = (spent / limit_amount) * 100
+    else:
+        usage_percentage = 0
+
+    # Determine status
+    if usage_percentage > 100:
+        status = "Exceeded"
+    elif usage_percentage == 100:
+        status = "On Target"
+    elif usage_percentage >= 70:
+        status = "Near Limit"
+    else:
+        status = "Healthy"
 
     return {
-        "spent_amount": spent,
-        "remaining_amount": remaining,
-        "is_over_budget": is_over_budget,
+        "spent_amount": round(spent, 2),
+        "remaining_amount": round(remaining, 2),
+        "usage_percentage": round(usage_percentage, 2),
+        "status": status,
     }

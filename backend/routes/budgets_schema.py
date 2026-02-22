@@ -24,7 +24,8 @@ class BudgetResponse(BaseModel):
     spent_amount: float
     remaining_amount: float
     is_over_budget: bool
-
+    usage_percentage: float
+    status: str
 
 # ==============================
 # LIST RESPONSE
