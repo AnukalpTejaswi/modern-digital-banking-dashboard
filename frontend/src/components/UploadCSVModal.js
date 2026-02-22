@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from "react-dom";
 import { uploadTransactionsCSV } from '../api';
 import { showSuccess, showError } from '../utils/toast';
@@ -8,6 +8,19 @@ function UploadCSVModal({ isOpen, onClose, accountId, onUploadSuccess }) {
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
+  
+  useEffect(() => {
+    if (isOpen) {
+      window.scrollTo({ top: 0, behavior: "instant" });
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isOpen]);
 
   const handleUpload = async () => {
     if (!file) {
