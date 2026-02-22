@@ -95,10 +95,11 @@ function DashboardLayout() {
   useEffect(() => {
     const refreshAlerts = async () => {
       try {
+        await generateAlerts();
         const res = await getAlerts(true);
         setAlerts(res.data || []);
       } catch {
-        // silent fail
+        showError("Failed to refresh alerts");
       }
     };
 

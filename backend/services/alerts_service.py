@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
 from backend.model import Alert, Account, Budget, Bill, AlertType, Category
+from backend.services.budget_calculator import calculate_budget_usage
 
 
 async def create_alert(
@@ -50,6 +51,7 @@ async def check_low_balance(db: AsyncSession, user_id: int):
             )
 
 
+
 async def check_budget_exceeded(db: AsyncSession, user_id: int):
     result = await db.execute(
         select(Budget).where(Budget.user_id == user_id)
@@ -58,11 +60,13 @@ async def check_budget_exceeded(db: AsyncSession, user_id: int):
     budgets = result.scalars().all()
 
     for b in budgets:
-        if (
-            b.spent_amount is not None and
-            b.limit_amount is not None and
-            b.spent_amount > b.limit_amount
-        ):
+        usage = await calculate_budget_usage(
+            db=db,
+            budget=b,
+            user_id=user_id,
+        )
+
+        if usage["usage_percentage"] >= 70:   # ← YOUR THRESHOLD
             # Fetch category name
             cat_result = await db.execute(
                 select(Category.name).where(Category.id == b.category_id)
@@ -73,9 +77,9 @@ async def check_budget_exceeded(db: AsyncSession, user_id: int):
                 db,
                 user_id,
                 AlertType.budget_exceeded,
-                f"Budget exceeded for {category_name}"
+                f"Budget threshold reached for {category_name} "
+                f"({usage['usage_percentage']}%)"
             )
-
 
 async def check_upcoming_bills(db: AsyncSession, user_id: int):
     today = date.today()
