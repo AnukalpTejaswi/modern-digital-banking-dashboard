@@ -135,7 +135,6 @@ async def create_transaction(
         )
     category_id = await find_category_id(
         db,
-        current_user.id,
         f"{transaction.merchant} {transaction.description or ''}"
     )
 
@@ -279,7 +278,6 @@ async def upload_transactions_csv(
             # Category
             category_id = await find_category_id(
                 db,
-                current_user.id,
                 f"{merchant} {row.get('description', '')}"
             )
 
