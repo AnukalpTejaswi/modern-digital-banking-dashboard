@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from "react-dom";
 import { createTransaction } from '../api';
 import { showSuccess, showError } from '../utils/toast';
 
@@ -62,25 +63,24 @@ function AddTransactionModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
 
-      {/* Background Blur Layer */}
+      {/* Background */}
       <div
-        className="absolute inset-0 backdrop-blur-sm bg-white/30"
+        className="absolute inset-0 backdrop-blur-sm bg-black/30"
         onClick={() => {
           setFormData(INITIAL_FORM_STATE);
           onClose();
         }}
       ></div>
 
-      {/* Modal Content */}
+      {/* Modal */}
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Add Transaction</h2>
 
         <form onSubmit={handleSubmit} className="space-y-3">
 
-          {/* Amount */}
           <input
             type="number"
             step="0.01"
@@ -94,7 +94,6 @@ function AddTransactionModal({
             }
           />
 
-          {/* Transaction Type */}
           <select
             className="w-full border p-2 rounded"
             value={formData.txn_type}
@@ -106,7 +105,6 @@ function AddTransactionModal({
             <option value="credit">Credit (Income)</option>
           </select>
 
-          {/* Category */}
           <select
             className="w-full border p-2 rounded"
             value={formData.category}
@@ -126,7 +124,6 @@ function AddTransactionModal({
             <option>Others</option>
           </select>
 
-          {/* Currency */}
           <select
             className="w-full border p-2 rounded"
             value={formData.currency}
@@ -145,7 +142,6 @@ function AddTransactionModal({
             <option value="CNY">CNY (¥)</option>
           </select>
 
-          {/* Description */}
           <input
             type="text"
             placeholder="Description (optional)"
@@ -156,7 +152,6 @@ function AddTransactionModal({
             }
           />
 
-          {/* Merchant */}
           <input
             type="text"
             placeholder="Merchant"
@@ -168,10 +163,10 @@ function AddTransactionModal({
             }
           />
 
-          {/* Transaction Date */}
           <label className="block text-sm font-medium mb-1">
             Transaction Date
           </label>
+
           <input
             type="date"
             required
@@ -183,7 +178,6 @@ function AddTransactionModal({
             }
           />
 
-          {/* Buttons */}
           <div className="flex justify-end gap-2 pt-4">
             <button
               type="button"
@@ -207,7 +201,8 @@ function AddTransactionModal({
         </form>
       </div>
 
-    </div>
+    </div>,
+    document.body
   );
 }
 

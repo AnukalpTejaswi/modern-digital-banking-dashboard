@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from "react-dom";
 import { createBudget, updateBudget } from '../api';
 import { CATEGORIES } from '../constants/categories';
 import { showSuccess, showError } from '../utils/toast';
-
 // Month labels for dropdown
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -101,12 +101,12 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
 
-      {/* Background Blur */}
+      {/* Background */}
       <div
-        className="absolute inset-0 backdrop-blur-sm bg-white/30"
+        className="absolute inset-0 backdrop-blur-sm bg-black/30"
         onClick={onClose}
       ></div>
 
@@ -118,7 +118,6 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
 
         {/* Month / Year */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-
           <div>
             <label className="block text-sm font-medium mb-1">Month</label>
             <select
@@ -130,9 +129,7 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
               className="w-full border rounded px-3 py-2"
             >
               {MONTHS.map((m, i) => (
-                <option key={m} value={i + 1}>
-                  {m}
-                </option>
+                <option key={m} value={i + 1}>{m}</option>
               ))}
             </select>
           </div>
@@ -154,11 +151,9 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
               )}
             </select>
           </div>
-
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-
           <select
             className="w-full border p-2 rounded"
             value={formData.category}
@@ -199,11 +194,11 @@ function AddBudgetModal({ isOpen, onClose, onCreated, budget }) {
               Save
             </button>
           </div>
-
         </form>
-
       </div>
-    </div>
+
+    </div>,
+    document.body
   );
 }
 
