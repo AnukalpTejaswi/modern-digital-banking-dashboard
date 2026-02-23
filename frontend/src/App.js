@@ -7,6 +7,7 @@ import DashboardLayout from "./pages/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import Accounts from "./pages/Accounts";
 import AccountDetails from "./pages/AccountDetails";
+import Categories from "./pages/Categories";
 import Budgets from "./pages/Budgets";
 import Bills from "./pages/Bills";
 import { DateProvider } from "./context/DateContext";
@@ -44,6 +45,7 @@ function App() {
             <Route index element={<DashboardHome />} />
             <Route path="accounts" element={<Accounts />} />
             <Route path="accounts/:accountId" element={<AccountDetails />} />
+            <Route path="categories" element={<Categories />} />
             <Route path="budgets" element={<Budgets />} />
             <Route path="bills" element={<Bills />} />
             <Route path="profile" element={<Profile />} />

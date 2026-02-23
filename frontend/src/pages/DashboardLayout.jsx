@@ -21,12 +21,14 @@ import {
   ChevronDown,
   Sparkles,
   TrendingUp,
+  Tags,
 } from "lucide-react";
 
 // ─── Nav items config ───────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/dashboard/accounts", label: "Accounts", icon: Wallet },
+  { to: "/dashboard/categories", label: "Categories", icon: Tags },
   { to: "/dashboard/budgets", label: "Budgets", icon: PiggyBank },
   { to: "/dashboard/bills", label: "Bills", icon: Receipt },
   { to: "/dashboard/rewards", label: "Rewards", icon: Gift },
