@@ -4,6 +4,7 @@ from sqlalchemy import text, create_engine
 from typing import AsyncGenerator
 import os
 from dotenv import load_dotenv
+import ssl
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 
@@ -14,13 +15,15 @@ if not DATABASE_URL:
 
 print(f"Connecting to: {DATABASE_URL}")
 
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=True,
-    pool_size=10,
-    max_overflow=10,
     pool_pre_ping=True,
-    connect_args={"ssl": True}
+    connect_args={"ssl": ssl_context}
 )
 
 
