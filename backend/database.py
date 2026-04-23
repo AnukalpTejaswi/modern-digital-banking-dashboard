@@ -23,7 +23,10 @@ engine = create_async_engine(
     DATABASE_URL,
     echo=True,
     pool_pre_ping=True,
-    connect_args={"ssl": ssl_context}
+    connect_args={
+        "ssl": ssl_context,
+        "statement_cache_size": 0  
+    }
 )
 
 
@@ -39,11 +42,6 @@ SyncSessionLocal = sessionmaker(
     bind=sync_engine,
 )
 '''
-
-async_session = async_sessionmaker(
-    bind=engine,
-    expire_on_commit=False
-)
 
 AsyncSessionLocal = async_sessionmaker(
     engine,
