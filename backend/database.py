@@ -20,14 +20,14 @@ engine = create_async_engine(
     pool_size=10,
     max_overflow=10,
     pool_pre_ping=True,
+    connect_args={"ssl": "require"}
 )
 
 
-SYNC_DATABASE_URL = os.getenv(
+'''SYNC_DATABASE_URL = os.getenv(
     "SYNC_DATABASE_URL",
     "postgresql://postgres:anukalp@localhost:5432/digital_banking_dashboard"
 )
-
 sync_engine = create_engine(SYNC_DATABASE_URL)
 
 SyncSessionLocal = sessionmaker(
@@ -35,7 +35,7 @@ SyncSessionLocal = sessionmaker(
     autoflush=False,
     bind=sync_engine,
 )
-
+'''
 
 async_session = async_sessionmaker(
     bind=engine,
